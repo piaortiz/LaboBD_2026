@@ -30,10 +30,10 @@ El Bundle A2 carga automáticamente todos los datos de referencia y el menú com
 ### **Datos de Referencia**
 | **Tabla** | **Registros** | **Descripción** |
 |-----------|---------------|-----------------|
-| ESTADO_PEDIDO | 8 | Pendiente, Confirmado, En Preparación, Listo, En Reparto, Entregado, Cerrado, Cancelado |
-| CANAL_VENTA | 5 | Mostrador, Delivery, Mesa QR, Teléfono, App Móvil |
-| ROL | 7 | Administrador, Gerente, Cajero, Mesero, Cocinero, Delivery, Auditor |
-| SUCURSAL | 2 | San Telmo (Defensa 742), Palermo (Thames 1850) |
+| ESTADOS_PEDIDO | 4 | Pendiente, En Preparación, Listo, Entregado |
+| CANALES_VENTA | 2 | Presencial (65%), Delivery (35%) |
+| SUCURSALES | 1 | San Telmo (Defensa 742) - Palermo eliminado |
+| CATEGORIAS | 5 | Entradas, Pastas, Carnes, Postres, Bebidas |
 
 ### **Menú del Bodegón (22 platos)**
 | **Categoría** | **Platos** |
@@ -54,100 +54,76 @@ Rango: $600 (Agua) — $7800 (Bife de Chorizo a la Leña).
 
 ---
 
-## CARGA MASIVA — BULK INSERT (10.000+ REGISTROS)
+## CARGA MASIVA DE TESTING (10.000+ REGISTROS)
 
-Para cumplir con el requisito académico de 10.000+ registros, se debe generar y cargar un volumen mayor de datos históricos. Esto requiere archivos CSV y un script BULK INSERT.
+Para pruebas de performance y validación con volumen realista, el proyecto incluye un script automatizado de carga masiva.
 
-### **Tablas candidatas para carga masiva**
+### **Script Disponible**
+📄 **Archivo:** `B - Scripts SQL/07_CARGA_MASIVA_DATOS.sql`  
+📋 **Documentación:** `B - Scripts SQL/README_CARGA_MASIVA.md`
 
-| **Tabla** | **Registros sugeridos** | **Justificación** |
-|-----------|------------------------|-------------------|
-| CLIENTE | 500 | Clientes únicos con historial |
-| DOMICILIO | 600 | Domicilios de clientes (delivery) |
-| EMPLEADO | 20 | Personal de ambas sucursales |
-| MESA | 60 | 30 mesas por sucursal |
-| PEDIDO | 5.000 | Pedidos históricos 2026 |
-| DETALLE_PEDIDO | 15.000 | 3 ítems promedio por pedido |
+### **Características del Script**
+- **Generación automática** de datos realistas (sin archivos CSV)
+- **No requiere** herramientas externas
+- **Distribución realista** de canales: 65% Presencial, 35% Delivery
+- **Datos coherentes** con fechas distribuidas en 6 meses
 
-### **Estrategia de generación con IA**
+### **Volumen Generado**
 
-Los archivos CSV deben generarse con IA (ChatGPT, Copilot, etc.) o Python.  
-Ver documento: **09 - Generacion de Datos con IA.md** (pendiente de creación).
+| **Tabla** | **Registros** | **Descripción** |
+|-----------|---------------|-----------------|
+| CLIENTES | 3,000 | Clientes con DNI, email, teléfono |
+| DIRECCIONES_CLIENTES | 4,500 | 1.5 direcciones promedio por cliente |
+| PEDIDOS | 10,000 | Pedidos distribuidos en 6 meses |
+| PEDIDOS_DETALLE | ~30,000 | 3 items promedio por pedido |
+| AUDITORIA_SIMPLE | 500+ | Registros de auditoría adicionales |
+| NOTIFICACIONES | 1,000+ | Notificaciones automáticas |
 
-**Prompt de referencia para IA:**
-```
-Generá un archivo CSV con 5000 registros de pedidos para un restaurante bodegón porteño 
-argentino llamado "Los Esbirros de Claudio" con dos sucursales (sucursal_id 1 y 2).
-Columnas: pedido_id, sucursal_id, canal_id (1=Mesa, 2=Mostrador, 3=Delivery), 
-mesa_id (NULL si delivery/mostrador), cliente_id (NULL si mesa/mostrador), 
-estado_id (entre 1 y 8), tomado_por_empleado_id (entre 1 y 20), 
-fecha_pedido (distribuido en enero-abril 2026), comensales (1-8), total (entre 800 y 15000).
-Formato CSV sin encabezado, separado por coma.
-```
+**Total estimado:** ~47,000 registros
 
-### **Script BULK INSERT de referencia**
+### **Ejecución del Script**
 
 ```sql
--- Prerequisito: Deshabilitar índices no-clustered ANTES del bulk insert
--- (ver mejorespracticas.md §3)
-
+-- Prerequisito: Sistema EsbirrosDB completamente instalado (Bundles A1-R2)
 USE EsbirrosDB;
 GO
 
--- 1. Deshabilitar índices no-clustered
-ALTER INDEX IX_PEDIDO_fecha_pedido ON PEDIDO DISABLE;
-ALTER INDEX IX_PEDIDO_estado_id    ON PEDIDO DISABLE;
-ALTER INDEX IX_PEDIDO_canal_id     ON PEDIDO DISABLE;
+-- Ejecutar el script completo
+-- Archivo: 07_CARGA_MASIVA_DATOS.sql
+-- Tiempo estimado: 5-10 minutos
+```
 
--- 2. Cargar clientes
-BULK INSERT CLIENTE
-FROM 'C:\BulkData\clientes_esbirros.csv'
-WITH (
-    FIELDTERMINATOR = ',',
-    ROWTERMINATOR   = '\n',
-    FIRSTROW        = 1,
-    BATCHSIZE       = 1000,
-    TABLOCK
-);
+### **Validación Post-Carga**
 
--- 3. Cargar pedidos
-BULK INSERT PEDIDO
-FROM 'C:\BulkData\pedidos_esbirros.csv'
-WITH (
-    FIELDTERMINATOR = ',',
-    ROWTERMINATOR   = '\n',
-    FIRSTROW        = 1,
-    BATCHSIZE       = 1000,
-    TABLOCK
-);
-
--- 4. Cargar detalle de pedidos
-BULK INSERT DETALLE_PEDIDO
-FROM 'C:\BulkData\detalle_pedidos_esbirros.csv'
-WITH (
-    FIELDTERMINATOR = ',',
-    ROWTERMINATOR   = '\n',
-    FIRSTROW        = 1,
-    BATCHSIZE       = 1000,
-    TABLOCK
-);
-
--- 5. Reconstruir índices después del bulk insert
-ALTER INDEX IX_PEDIDO_fecha_pedido ON PEDIDO REBUILD;
-ALTER INDEX IX_PEDIDO_estado_id    ON PEDIDO REBUILD;
-ALTER INDEX IX_PEDIDO_canal_id     ON PEDIDO REBUILD;
-
--- 6. Actualizar estadísticas
-UPDATE STATISTICS PEDIDO;
-UPDATE STATISTICS DETALLE_PEDIDO;
-UPDATE STATISTICS CLIENTE;
-
--- 7. Verificar carga
-SELECT 'PEDIDO'         AS tabla, COUNT(*) AS registros FROM PEDIDO
+```sql
+-- Verificar volumen cargado
+SELECT 
+    'CLIENTES' AS Tabla, COUNT(*) AS Total FROM CLIENTES
 UNION ALL
-SELECT 'DETALLE_PEDIDO' AS tabla, COUNT(*) AS registros FROM DETALLE_PEDIDO
+SELECT 'DIRECCIONES_CLIENTES', COUNT(*) FROM DIRECCIONES_CLIENTES
 UNION ALL
-SELECT 'CLIENTE'        AS tabla, COUNT(*) AS registros FROM CLIENTE;
+SELECT 'PEDIDOS', COUNT(*) FROM PEDIDOS
+UNION ALL
+SELECT 'PEDIDOS_DETALLE', COUNT(*) FROM PEDIDOS_DETALLE
+UNION ALL
+SELECT 'AUDITORIA_SIMPLE', COUNT(*) FROM AUDITORIA_SIMPLE
+UNION ALL
+SELECT 'NOTIFICACIONES', COUNT(*) FROM NOTIFICACIONES;
+```
+
+**Resultado esperado:**
+```
+Tabla                    | Total
+-------------------------|-------
+CLIENTES                 | 3,000
+DIRECCIONES_CLIENTES     | 4,500
+PEDIDOS                  | 10,000
+PEDIDOS_DETALLE          | ~30,000
+AUDITORIA_SIMPLE         | 500+
+NOTIFICACIONES           | 1,000+
+```
+
+---
 -- Verificar que superan los 10.000 registros en total
 ```
 

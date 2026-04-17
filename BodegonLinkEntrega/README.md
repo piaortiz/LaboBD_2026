@@ -1,12 +1,12 @@
 # EsbirrosDB v2.0
 ## Sistema de Gestión de Pedidos — Bodegón Porteño
 
-**Proyecto Académico - Administración de Bases de Datos**  
-**Profesor:** Victor Cordero  
+**Proyecto Académico - Laboratorio de Administración de Bases de Datos**  
+**Profesor:** Carlos Alejandro Caraccio  
 **Instituto:** ISTEA  
 **Desarrollado por:** SQLeaders S.A.  
 **Cliente Ficticio:** Bodegón Los Esbirros de Claudio  
-**Fecha:** 2026
+**Fecha:** Abril 2026
 
 ---
 
@@ -46,14 +46,20 @@
 
 ## Descripción del Proyecto
 
-EsbirrosDB es un sistema integral de gestión de pedidos diseñado para un **bodegón porteño**: restaurante tradicional de Buenos Aires conocido por su ambiente cálido, cocina casera y parrilla a la leña. El cliente ficticio es **Bodegón Los Esbirros de Claudio**, con dos sucursales: San Telmo y Palermo.
+EsbirrosDB es un sistema integral de gestión de pedidos diseñado para un **bodegón porteño**: restaurante tradicional de Buenos Aires conocido por su ambiente cálido, cocina casera y parrilla a la leña. El cliente ficticio es **Bodegón Los Esbirros de Claudio**, con sucursal en **San Telmo** (datos de Palermo eliminados de producción).
 
 El modelo de datos es directo: cada ítem de pedido referencia siempre un plato individual, lo que simplifica la operatoria del restaurante y el modelo relacional.
+
+### Canales de Venta Operativos
+- **Presencial (65%)**: Atención en mesas del local
+- **Delivery (35%)**: Entregas a domicilio
+- **Nota**: App Móvil no implementada en esta versión
 
 ## Estructura del Proyecto
 
 ```
-BodegaLinkEntrega/
+BodegonLinkEntrega/
+├── RESUMEN_NEGOCIO.md                    # 📄 Presentación ejecutiva del proyecto
 ├── A - Documentacion Tecnica/
 │   ├── 01 - Requerimientos Tecnicos.md
 │   ├── 02 - Diccionario de Datos.md
@@ -70,7 +76,9 @@ BodegaLinkEntrega/
 │   ├── 03_Seguridad_Consultas/
 │   ├── 04_Automatizacion_Avanzada/
 │   ├── 05_Reportes_Dashboard/
-│   └── 06_VALIDACION_POST_BUNDLES.sql
+│   ├── 06_VALIDACION_POST_BUNDLES.sql
+│   ├── 07_CARGA_MASIVA_DATOS.sql         # 🚀 Script de testing (10K+ pedidos)
+│   └── README_CARGA_MASIVA.md            # 📋 Documentación de testing
 ├── ANALISIS_REQUISITOS_TP.md
 └── RESUMEN_ADAPTACION.md
 ```
@@ -90,19 +98,21 @@ BodegaLinkEntrega/
 - Usuarios sin login para acceso desde aplicación
 
 ### Funcionalidades Principales
-- Gestión completa de mesas con QR tokens
-- Sistema de pedidos con estados automatizados
+- Gestión completa de clientes y direcciones de entrega
+- Sistema de pedidos multicanal (Presencial + Delivery)
 - Control de inventario simulado (STOCK_SIMULADO)
-- Sistema de notificaciones internas (NOTIFICACIONES)
-- Dashboard ejecutivo y monitoreo en tiempo real
+- Sistema de notificaciones automáticas (NOTIFICACIONES)
+- Auditoría completa de operaciones (AUDITORIA_SIMPLE)
+- Dashboard ejecutivo y reportes gerenciales
 
 ## Datos del Cliente Ficticio
 
 **Bodegón Los Esbirros de Claudio** — Restaurante tradicional porteño
-- **Sucursales:** San Telmo (Defensa 742) y Palermo (Thames 1850)
-- **Capacidad:** 2 sucursales, múltiples mesas
+- **Sucursal activa:** San Telmo (Defensa 742)
+- **Canales:** Presencial (65%) y Delivery (35%)
 - **Menú:** 22 platos bodegón (empanadas, fideos, milanesas, parrilla, postres, bebidas)
 - **Especialidad:** Cocina casera argentina, parrilla a la leña
+- **Nota:** Datos de sucursal Palermo eliminados en versión actual
 
 ## Instalación y Despliegue
 
@@ -115,17 +125,18 @@ BodegaLinkEntrega/
 ```
 Bundle CERO  → Reset completo (opcional, para reinstalación)
 Bundle A1    → Estructura de BD y tablas
-Bundle A2    → Índices, datos de referencia y menú del bodegón
-Bundle B1    → sp_CrearPedido
-Bundle B2    → sp_AgregarItemPedido, sp_CalcularTotalPedido
-Bundle B3    → sp_CerrarPedido, sp_CancelarPedido, sp_ActualizarEstadoPedido
-Bundle C     → Roles y seguridad
-Bundle D     → Consultas y vistas base
-Bundle E1    → Triggers de totales y auditoría
-Bundle E2    → Stock simulado y notificaciones
-Bundle R1    → Stored procedures de reportes
-Bundle R2    → Vistas de dashboard
+Bundle A2    → Índices y datos iniciales (solo San Telmo)
+Bundle B1    → Stored Procedures CRUD
+Bundle B2    → Stored Procedures de Reportes
+Bundle B3    → Stored Procedures de Procesos
+Bundle C     → Vistas de consolidación
+Bundle D     → Triggers de automatización
+Bundle E1    → Seguridad (roles y permisos)
+Bundle E2    → Usuarios de aplicación
+Bundle R1    → Validación del sistema
+Bundle R2    → Consultas de ejemplo
 Validación   → 06_VALIDACION_POST_BUNDLES.sql
+Testing      → 07_CARGA_MASIVA_DATOS.sql (opcional, 10K+ pedidos)
 ```
 
 Para instrucciones completas: **[03 - Guia de Despliegue Inicial.md](A%20-%20Documentacion%20Tecnica/03%20-%20Guia%20de%20Despliegue%20Inicial.md)**
@@ -140,11 +151,13 @@ Para instrucciones completas: **[03 - Guia de Despliegue Inicial.md](A%20-%20Doc
 ## Métricas del Proyecto
 
 - **Tablas implementadas:** 12 principales + 4 auxiliares = 16 total
-- **Stored Procedures:** 19
+- **Stored Procedures:** 18
 - **Triggers:** 5 activos
 - **Vistas:** 4 (incluyendo dashboard)
 - **Roles de seguridad:** 8
+- **Usuarios de aplicación:** 3
 - **Documentos técnicos:** 8
+- **Scripts de testing:** 1 (carga masiva con 10K+ pedidos)
 
 ## Licencia
 
