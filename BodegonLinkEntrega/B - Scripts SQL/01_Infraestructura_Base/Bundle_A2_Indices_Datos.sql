@@ -83,8 +83,7 @@ PRINT 'Paso 2/2: Insertando datos iniciales...'
 
 -- ─── SUCURSAL ────────────────────────────────
 INSERT INTO SUCURSAL (nombre, direccion) VALUES
-('Los Esbirros de Claudio - San Telmo', 'Defensa 742, San Telmo, CABA'),
-('Los Esbirros de Claudio - Palermo',   'Thames 1850, Palermo, CABA')
+('Los Esbirros de Claudio - San Telmo', 'Defensa 742, San Telmo, CABA')
 GO
 
 -- ─── CANALES DE VENTA ────────────────────────
@@ -123,7 +122,6 @@ GO
 
 -- ─── MESAS (Sucursal San Telmo) ──────────────
 DECLARE @suc_santelmo INT = (SELECT sucursal_id FROM SUCURSAL WHERE nombre LIKE '%San Telmo%')
-DECLARE @suc_palermo  INT = (SELECT sucursal_id FROM SUCURSAL WHERE nombre LIKE '%Palermo%')
 
 INSERT INTO MESA (numero, capacidad, sucursal_id, qr_token) VALUES
 -- San Telmo (salón principal, mesas de madera típicas de bodegón)
@@ -134,12 +132,7 @@ INSERT INTO MESA (numero, capacidad, sucursal_id, qr_token) VALUES
 (5, 6,  @suc_santelmo, 'QR_ST_005_' + CONVERT(VARCHAR(36), NEWID())),
 (6, 6,  @suc_santelmo, 'QR_ST_006_' + CONVERT(VARCHAR(36), NEWID())),
 (7, 8,  @suc_santelmo, 'QR_ST_007_' + CONVERT(VARCHAR(36), NEWID())),
-(8, 10, @suc_santelmo, 'QR_ST_008_' + CONVERT(VARCHAR(36), NEWID())),
--- Palermo
-(1, 2,  @suc_palermo,  'QR_PA_001_' + CONVERT(VARCHAR(36), NEWID())),
-(2, 4,  @suc_palermo,  'QR_PA_002_' + CONVERT(VARCHAR(36), NEWID())),
-(3, 4,  @suc_palermo,  'QR_PA_003_' + CONVERT(VARCHAR(36), NEWID())),
-(4, 6,  @suc_palermo,  'QR_PA_004_' + CONVERT(VARCHAR(36), NEWID()))
+(8, 10, @suc_santelmo, 'QR_ST_008_' + CONVERT(VARCHAR(36), NEWID()))
 GO
 
 -- ─── EMPLEADO ADMINISTRADOR ──────────────────
