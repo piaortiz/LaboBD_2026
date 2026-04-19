@@ -92,11 +92,12 @@
 | **REPORTES_GENERADOS** | Histórico de reportes ejecutados | ✅ SÍ (FK a SUCURSALES) |
 
 #### ⚙️ Componentes Programáticos
-- **18 Stored Procedures**: CRUD completo, reportes gerenciales, procesos batch
-- **4 Views**: Dashboard consolidado, resúmenes ejecutivos
-- **5 Triggers**: Automatización de cálculos, auditoría, stock, notificaciones
-- **8 Roles de Seguridad**: Control de acceso granular (Admin, Gerente, Vendedor, Cocina, etc.)
-- **3 Usuarios de Aplicación**: admin_user, gerente_user, vendedor_user
+- **12 Stored Procedures**: 6 operaciones CRUD, 5 reportes gerenciales, 1 auditoría de seguridad
+- **4 Views**: Dashboard ejecutivo, monitoreo en tiempo real, pedidos completos, estado de mesas
+- **5 Triggers**: Cálculo de totales, auditoría (x2), control de stock, notificaciones
+- **9 Roles de Seguridad**: Administrador, Gerente, Mozo, Cajero, Cocinero, Delivery, Cliente, Reportes, App Web
+- **3 Usuarios de Aplicación**: app_esbirros_web, app_esbirros_reportes, app_esbirros_delivery
+- **19 Empleados**: Distribuidos por roles según horarios de atención (almuerzo/cena)
 
 ---
 
@@ -169,16 +170,18 @@ La ausencia de FK en `AUDITORIA_SIMPLE` es una **decisión de diseño profesiona
 ### 📊 Estado Actual (Base de Datos Operativa)
 | Componente | Cantidad | Detalle |
 |------------|----------|---------|
-| **Sucursales** | 1 activa | San Telmo (id_sucursal=1) |
-| **Platos en menú** | 22 | Categorías: Entradas, Pastas, Carnes, Postres, Bebidas |
+| **Sucursales** | 1 activa | San Telmo (Defensa 742) |
+| **Platos en menú** | 22 | Entradas, Pastas, Carnes, Postres, Bebidas |
+| **Mesas** | 8 | Capacidad 2-10 comensales (~50 personas) |
 | **Stock inicial** | 2,200 unidades | 100 unidades por plato |
 | **Canales operativos** | 2 | Presencial (65%), Delivery (35%) |
 | **Estados de pedido** | 4 | Pendiente → En Preparación → Listo → Entregado |
-| **Stored Procedures** | 18 | CRUD + Reportes + Procesos |
-| **Views** | 4 | Dashboards consolidados |
-| **Triggers** | 5 | Automatización total |
-| **Roles de seguridad** | 8 | Control granular |
-| **Usuarios creados** | 3 | admin_user, gerente_user, vendedor_user |
+| **Stored Procedures** | 12 | 6 CRUD + 5 Reportes + 1 Auditoría |
+| **Views** | 4 | Dashboard, Monitoreo, Pedidos, Mesas |
+| **Triggers** | 5 | Totales, Auditoría (x2), Stock, Notificaciones |
+| **Roles de seguridad** | 9 | Admin, Gerente, Mozo, Cajero, Cocinero, Delivery, Hostess, Reportes, App |
+| **Usuarios de app** | 3 | app_esbirros_web, app_esbirros_reportes, app_esbirros_delivery |
+| **Empleados** | 19 | Distribuidos por turnos (almuerzo/cena) |
 
 ### 🚀 Capacidad de Carga Masiva (Testing)
 El sistema incluye un script de prueba (`07_CARGA_MASIVA_DATOS.sql`) capaz de generar:
@@ -196,17 +199,26 @@ El sistema incluye un script de prueba (`07_CARGA_MASIVA_DATOS.sql`) capaz de ge
 
 ## 🔐 Seguridad y Control de Acceso
 
-### Roles Implementados
-| Rol | Permisos | Usuarios Típicos |
-|-----|----------|------------------|
-| **admin_esbirros** | Control total del sistema | Administrador de sistema |
-| **gerente_esbirros** | Reportes, configuración, gestión | Gerente del bodegón |
-| **vendedor_esbirros** | Crear/modificar pedidos, clientes | Mozos, vendedores |
-| **cocina_esbirros** | Visualizar pedidos, actualizar estados | Personal de cocina |
-| **repartidor_esbirros** | Ver pedidos delivery, actualizar entregas | Repartidores |
-| **auditor_esbirros** | Solo lectura de logs y auditoría | Auditor interno |
-| **reportes_esbirros** | Ejecución de reportes gerenciales | Analistas, contadores |
-| **soporte_esbirros** | Troubleshooting y mantenimiento | Equipo de soporte técnico |
+### Roles Implementados (9 roles)
+| Rol | Permisos | Empleados Asignados |
+|-----|----------|---------------------|
+| **rol_administrador** | Control total del sistema | 1 Administrador |
+| **rol_gerente** | Reportes, configuración, gestión operativa | 1 Gerente |
+| **rol_mozo** | Toma de pedidos, consulta mesas, actualizar estados | 6 Mozos (3 almuerzo + 3 cena) |
+| **rol_cajero** | Operaciones de caja, cierre de pedidos | 2 Cajeros (1 por turno) |
+| **rol_cocinero** | Ver pedidos, actualizar estados de preparación | 4 Cocineros (2 por turno) |
+| **rol_delivery** | Ver pedidos delivery, actualizar entregas | 3 Repartidores (turno cena) |
+| **rol_hostess** | Gestión de mesas, recepción de clientes | 2 Hostess (1 por turno) |
+| **rol_reportes** | Ejecución de reportes gerenciales | Acceso para reportes |
+| **rol_aplicacion_web** | Permisos para aplicación web | App externa |
+| **rol_cliente** | Lectura de menú y propios pedidos | Acceso clientes |
+
+**Total empleados:** 19 personas distribuidas según horarios de atención
+
+### Horarios del Bodegón
+- **Lunes a Sábado:** 12:00-16:00 (almuerzo) y 20:00-00:00 (cena)
+- **Domingo:** 12:00-17:00 (solo almuerzo)
+- **Capacidad:** 8 mesas (2-10 comensales) = ~50 personas simultáneas
 
 ---
 

@@ -53,6 +53,11 @@ ELSE PRINT 'Rol rol_aplicacion_web ya existe';
 IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_cocinero')
 BEGIN CREATE ROLE [rol_cocinero]; PRINT 'Rol rol_cocinero creado'; END
 ELSE PRINT 'Rol rol_cocinero ya existe';
+
+-- Rol mozo (atención en mesas)
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_mozo')
+BEGIN CREATE ROLE [rol_mozo]; PRINT 'Rol rol_mozo creado'; END
+ELSE PRINT 'Rol rol_mozo ya existe';
 GO
 
 -- =============================================
@@ -139,6 +144,23 @@ GRANT EXECUTE ON dbo.sp_ConsultarNotificaciones  TO [rol_cocinero];
 GRANT EXECUTE ON dbo.sp_MarcarNotificacionLeida  TO [rol_cocinero];
 GRANT EXECUTE ON dbo.sp_ConsultarStock           TO [rol_cocinero];
 PRINT 'Permisos rol_cocinero configurados';
+
+-- ROL MOZO: toma de pedidos, consulta mesas, actualización de estados
+GRANT SELECT ON dbo.PEDIDO          TO [rol_mozo];
+GRANT SELECT ON dbo.DETALLE_PEDIDO  TO [rol_mozo];
+GRANT SELECT ON dbo.PLATO           TO [rol_mozo];
+GRANT SELECT ON dbo.PRECIO          TO [rol_mozo];
+GRANT SELECT ON dbo.MESA            TO [rol_mozo];
+GRANT SELECT ON dbo.CLIENTE         TO [rol_mozo];
+GRANT SELECT ON dbo.ESTADO_PEDIDO   TO [rol_mozo];
+GRANT SELECT ON dbo.CANAL_VENTA     TO [rol_mozo];
+GRANT INSERT, UPDATE ON dbo.PEDIDO         TO [rol_mozo];
+GRANT INSERT, UPDATE ON dbo.DETALLE_PEDIDO TO [rol_mozo];
+GRANT EXECUTE ON dbo.sp_CrearPedido             TO [rol_mozo];
+GRANT EXECUTE ON dbo.sp_AgregarItemPedido       TO [rol_mozo];
+GRANT EXECUTE ON dbo.sp_CalcularTotalPedido     TO [rol_mozo];
+GRANT EXECUTE ON dbo.sp_ActualizarEstadoPedido  TO [rol_mozo];
+PRINT 'Permisos rol_mozo configurados';
 GO
 
 -- =============================================

@@ -145,6 +145,104 @@ INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUE
  @rol_admin, @suc_santelmo)
 GO
 
+-- ─── PLANTEL DE EMPLEADOS POR ROL ────────────────────
+-- Distribución basada en horarios del bodegón:
+-- Lunes a Sábado: 12:00-16:00 (almuerzo) y 20:00-00:00 (cena)
+-- Domingo: 12:00-17:00 (solo almuerzo)
+-- Capacidad: 8 mesas (2-10 comensales) = aprox. 50 personas simultáneas
+PRINT 'Generando plantel de empleados por rol...'
+
+DECLARE @rol_gerente     INT = (SELECT rol_id FROM ROL WHERE nombre = 'Gerente')
+DECLARE @rol_mozo        INT = (SELECT rol_id FROM ROL WHERE nombre = 'Mozo')
+DECLARE @rol_cajero      INT = (SELECT rol_id FROM ROL WHERE nombre = 'Cajero')
+DECLARE @rol_cocinero    INT = (SELECT rol_id FROM ROL WHERE nombre = 'Cocinero')
+DECLARE @rol_repartidor  INT = (SELECT rol_id FROM ROL WHERE nombre = 'Repartidor')
+DECLARE @rol_hostess     INT = (SELECT rol_id FROM ROL WHERE nombre = 'Hostess')
+DECLARE @suc_st          INT = (SELECT sucursal_id FROM SUCURSAL WHERE nombre LIKE '%San Telmo%')
+
+-- GERENCIA (1 persona - horario completo)
+INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+('María Fernández', 'maria.fernandez',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'gerente2026'), 2),
+ @rol_gerente, @suc_st)
+
+-- MOZOS (6 personas - 3 turno almuerzo, 3 turno cena)
+-- Turno almuerzo (12:00-16:00)
+INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+('Carlos Ramírez', 'carlos.ramirez',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'mozo2026'), 2),
+ @rol_mozo, @suc_st),
+('Lucía Gómez', 'lucia.gomez',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'mozo2026'), 2),
+ @rol_mozo, @suc_st),
+('Diego Martínez', 'diego.martinez',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'mozo2026'), 2),
+ @rol_mozo, @suc_st)
+
+-- Turno cena (20:00-00:00)
+INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+('Ana Torres', 'ana.torres',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'mozo2026'), 2),
+ @rol_mozo, @suc_st),
+('Javier López', 'javier.lopez',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'mozo2026'), 2),
+ @rol_mozo, @suc_st),
+('Sofía Benítez', 'sofia.benitez',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'mozo2026'), 2),
+ @rol_mozo, @suc_st)
+
+-- CAJEROS (2 personas - 1 por turno)
+INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+('Roberto Sánchez', 'roberto.sanchez',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'cajero2026'), 2),
+ @rol_cajero, @suc_st),
+('Patricia Morales', 'patricia.morales',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'cajero2026'), 2),
+ @rol_cajero, @suc_st)
+
+-- COCINEROS (4 personas - 2 por turno, parrilla a la leña requiere experiencia)
+-- Turno almuerzo
+INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+('Eduardo "Tito" González', 'eduardo.gonzalez',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'cocina2026'), 2),
+ @rol_cocinero, @suc_st),
+('Marta Navarro', 'marta.navarro',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'cocina2026'), 2),
+ @rol_cocinero, @suc_st)
+
+-- Turno cena
+INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+('Hernán Castro', 'hernan.castro',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'cocina2026'), 2),
+ @rol_cocinero, @suc_st),
+('Silvia Romero', 'silvia.romero',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'cocina2026'), 2),
+ @rol_cocinero, @suc_st)
+
+-- REPARTIDORES (3 personas - solo turno cena, delivery nocturno)
+INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+('Matías Pereyra', 'matias.pereyra',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'delivery2026'), 2),
+ @rol_repartidor, @suc_st),
+('Fernando Díaz', 'fernando.diaz',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'delivery2026'), 2),
+ @rol_repartidor, @suc_st),
+('Rodrigo Vega', 'rodrigo.vega',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'delivery2026'), 2),
+ @rol_repartidor, @suc_st)
+
+-- HOSTESS (2 personas - 1 por turno, recepción y asignación de mesas)
+INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+('Gabriela Paz', 'gabriela.paz',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'hostess2026'), 2),
+ @rol_hostess, @suc_st),
+('Valeria Ríos', 'valeria.rios',
+ CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'hostess2026'), 2),
+ @rol_hostess, @suc_st)
+
+PRINT 'Plantel generado: 19 empleados (1 Admin + 1 Gerente + 6 Mozos + 2 Cajeros + 4 Cocineros + 3 Repartidores + 2 Hostess)'
+GO
+
 -- ─── MENÚ BODEGÓN PORTEÑO ────────────────────
 -- Categorías: Entradas, Pastas, Carnes a la Leña, Guarniciones, Postres, Bebidas
 INSERT INTO PLATO (nombre, categoria) VALUES

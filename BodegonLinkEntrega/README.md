@@ -92,10 +92,11 @@ BodegonLinkEntrega/
 - **Stored procedures** para todas las operaciones críticas
 
 ### Seguridad
-- **8 roles específicos** con permisos granulares
-- Sistema de auditoría automático (AUDITORIA_SIMPLE)
+- **9 roles específicos** con permisos granulares (Admin, Gerente, Mozo, Cajero, Cocinero, Delivery, Hostess, Reportes, App)
+- **19 empleados** distribuidos por roles según horarios de atención
+- Sistema de auditoría automático (AUDITORIA_SIMPLE sin FK por diseño)
 - Control de acceso por funcionalidad
-- Usuarios sin login para acceso desde aplicación
+- 3 usuarios de aplicación sin login para acceso desde apps externas
 
 ### Funcionalidades Principales
 - Gestión completa de clientes y direcciones de entrega
@@ -151,11 +152,12 @@ Para instrucciones completas: **[03 - Guia de Despliegue Inicial.md](A%20-%20Doc
 ## Métricas del Proyecto
 
 - **Tablas implementadas:** 12 principales + 4 auxiliares = 16 total
-- **Stored Procedures:** 18
+- **Stored Procedures:** 12 (6 CRUD + 5 Reportes + 1 Auditoría)
 - **Triggers:** 5 activos
-- **Vistas:** 4 (incluyendo dashboard)
-- **Roles de seguridad:** 8
+- **Vistas:** 4 (Dashboard, Monitoreo, Pedidos, Mesas)
+- **Roles de seguridad:** 9 (Admin, Gerente, Mozo, Cajero, Cocinero, Delivery, Hostess, Reportes, App)
 - **Usuarios de aplicación:** 3
+- **Empleados generados:** 19 (distribuidos por turnos)
 - **Documentos técnicos:** 8
 - **Scripts de testing:** 1 (carga masiva con 10K+ pedidos)
 
