@@ -330,7 +330,6 @@ BEGIN
                                AND CAST(p.fecha_pedido AS DATE) = @fecha
     LEFT JOIN ESTADO_PEDIDO ep ON p.estado_id  = ep.estado_id
     GROUP BY cv.canal_id, cv.nombre
-    ORDER BY facturacion_canal DESC
 
     SELECT * FROM #ResultadoCanal ORDER BY facturacion_canal DESC
 
