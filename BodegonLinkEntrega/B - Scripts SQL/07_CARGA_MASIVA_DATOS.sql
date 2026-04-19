@@ -9,6 +9,7 @@ USE EsbirrosDB;
 GO
 
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 GO
 
 PRINT '======================================================='
@@ -181,8 +182,20 @@ DECLARE @estado_cerrado INT = (SELECT estado_id FROM ESTADO_PEDIDO WHERE nombre 
 DECLARE @estado_cancelado INT = (SELECT estado_id FROM ESTADO_PEDIDO WHERE nombre = 'Cancelado')
 
 -- Obtener IDs de canales (solo los que existen)
-DECLARE @canal_presencial INT = (SELECT canal_id FROM CANAL_VENTA WHERE nombre = 'Presencial')
+DECLARE @canal_presencial INT = (SELECT canal_id FROM CANAL_VENTA WHERE nombre = 'Mostrador')
 DECLARE @canal_delivery INT = (SELECT canal_id FROM CANAL_VENTA WHERE nombre = 'Delivery')
+DECLARE @canal_mesa_qr INT = (SELECT canal_id FROM CANAL_VENTA WHERE nombre = 'Mesa QR')
+DECLARE @canal_telefono INT = (SELECT canal_id FROM CANAL_VENTA WHERE nombre = 'Telefono')
+DECLARE @canal_app INT = (SELECT canal_id FROM CANAL_VENTA WHERE nombre = 'App Movil')
+
+-- Validación de canales
+IF @canal_presencial IS NULL OR @canal_delivery IS NULL
+BEGIN
+    PRINT 'ERROR: No se encontraron los canales necesarios (Mostrador/Delivery)'
+    RETURN
+END
+
+PRINT '   Canales detectados: Mostrador=' + CAST(@canal_presencial AS VARCHAR) + ', Delivery=' + CAST(@canal_delivery AS VARCHAR)
 
 WHILE @i <= 10000
 BEGIN
@@ -197,15 +210,19 @@ BEGIN
     SET @fecha_pedido = DATEADD(HOUR, 11 + (@i % 11), @fecha_pedido) -- Horario comercial 11-22hs
     SET @fecha_pedido = DATEADD(MINUTE, @i % 60, @fecha_pedido)
 
-    -- Distribución de canales: 65% presencial, 35% delivery
+    -- Distribución de canales: 50% Mostrador, 25% Delivery, 15% Mesa QR, 7% Telefono, 3% App
     SET @canal_id = CASE 
-        WHEN @i % 100 < 65 THEN @canal_presencial
-        ELSE @canal_delivery
+        WHEN @i % 100 < 50 THEN @canal_presencial
+        WHEN @i % 100 < 75 THEN @canal_delivery
+        WHEN @i % 100 < 90 AND @canal_mesa_qr IS NOT NULL THEN @canal_mesa_qr
+        WHEN @i % 100 < 97 AND @canal_telefono IS NOT NULL THEN @canal_telefono
+        WHEN @canal_app IS NOT NULL THEN @canal_app
+        ELSE @canal_presencial -- Fallback
     END
 
-    -- Mesa solo para presenciales (8 mesas disponibles)
+    -- Mesa para canales presenciales (Mostrador y Mesa QR)
     SET @mesa_id = CASE 
-        WHEN @canal_id = @canal_presencial THEN ((@i % 8) + 1)
+        WHEN @canal_id IN (@canal_presencial, @canal_mesa_qr) THEN ((@i % 8) + 1)
         ELSE NULL
     END
 
@@ -222,9 +239,9 @@ BEGIN
         ELSE NULL
     END
 
-    -- Cantidad de comensales (1-6 personas)
+    -- Cantidad de comensales (1-6 personas, solo para canales con mesa)
     SET @cant_comensales = CASE 
-        WHEN @canal_id = @canal_presencial THEN 1 + (@i % 6)
+        WHEN @canal_id IN (@canal_presencial, @canal_mesa_qr) THEN 1 + (@i % 6)
         ELSE NULL
     END
 
@@ -465,13 +482,14 @@ PRINT 'CARGA MASIVA COMPLETADA'
 PRINT '======================================================='
 PRINT ''
 
-DECLARE @total_clientes INT, @total_domicilios INT, @total_pedidos INT, @total_items INT
+DECLARE @total_clientes INT, @total_domicilios INT, @total_pedidos INT
 DECLARE @total_auditoria INT, @total_notificaciones INT, @total_facturacion DECIMAL(18,2)
+DECLARE @total_items_final INT
 
 SELECT @total_clientes = COUNT(*) FROM CLIENTE
 SELECT @total_domicilios = COUNT(*) FROM DOMICILIO
 SELECT @total_pedidos = COUNT(*) FROM PEDIDO
-SELECT @total_items = COUNT(*) FROM DETALLE_PEDIDO
+SELECT @total_items_final = COUNT(*) FROM DETALLE_PEDIDO
 SELECT @total_auditoria = COUNT(*) FROM AUDITORIA_SIMPLE
 SELECT @total_notificaciones = COUNT(*) FROM NOTIFICACIONES
 SELECT @total_facturacion = SUM(total) FROM PEDIDO p
@@ -483,13 +501,13 @@ PRINT '────────────────────────�
 PRINT 'Clientes registrados   : ' + CAST(@total_clientes AS VARCHAR)
 PRINT 'Domicilios registrados : ' + CAST(@total_domicilios AS VARCHAR)
 PRINT 'Pedidos generados      : ' + CAST(@total_pedidos AS VARCHAR)
-PRINT 'Items de pedidos       : ' + CAST(@total_items AS VARCHAR)
+PRINT 'Items de pedidos       : ' + CAST(@total_items_final AS VARCHAR)
 PRINT 'Registros auditoría    : ' + CAST(@total_auditoria AS VARCHAR)
 PRINT 'Notificaciones         : ' + CAST(@total_notificaciones AS VARCHAR)
 PRINT ''
 PRINT 'TOTAL REGISTROS        : ' + CAST(
     @total_clientes + @total_domicilios + @total_pedidos + 
-    @total_items + @total_auditoria + @total_notificaciones AS VARCHAR
+    @total_items_final + @total_auditoria + @total_notificaciones AS VARCHAR
 ) + ' registros'
 PRINT ''
 PRINT 'Facturación histórica  : $' + CAST(@total_facturacion AS VARCHAR)
