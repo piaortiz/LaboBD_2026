@@ -73,15 +73,15 @@ PRINT '1. Generando 3,000 clientes...'
 DECLARE @i INT = 1
 DECLARE @nombres TABLE (nombre NVARCHAR(50))
 INSERT INTO @nombres VALUES 
-('Juan'),('María'),('Carlos'),('Ana'),('Luis'),('Laura'),('Pedro'),('Sofia'),
+('Juan'),('Maria'),('Carlos'),('Ana'),('Luis'),('Laura'),('Pedro'),('Sofia'),
 ('Miguel'),('Elena'),('Jorge'),('Carmen'),('Roberto'),('Isabel'),('Diego'),
-('Patricia'),('Fernando'),('Lucía'),('Ricardo'),('Martina'),('Andrés'),('Valentina')
+('Patricia'),('Fernando'),('Lucia'),('Ricardo'),('Martina'),('Andres'),('Valentina')
 
 DECLARE @apellidos TABLE (apellido NVARCHAR(50))
 INSERT INTO @apellidos VALUES 
-('González'),('Rodríguez'),('Fernández'),('López'),('Martínez'),('Sánchez'),
-('Pérez'),('Gómez'),('Martín'),('Jiménez'),('Ruiz'),('Hernández'),('Díaz'),
-('Moreno'),('Muñoz'),('Álvarez'),('Romero'),('Alonso'),('Gutiérrez'),('Navarro')
+('Gonzalez'),('Rodriguez'),('Fernandez'),('Lopez'),('Martinez'),('Sanchez'),
+('Perez'),('Gomez'),('Martin'),('Jimenez'),('Ruiz'),('Hernandez'),('Diaz'),
+('Moreno'),('Munoz'),('Alvarez'),('Romero'),('Alonso'),('Gutierrez'),('Navarro')
 
 -- Insertar clientes en lotes para mejor performance
 WHILE @i <= 3000
@@ -144,7 +144,7 @@ PRINT '3. Generando 10,000 pedidos...'
 DECLARE @canal_mostrador INT = (SELECT canal_id FROM CANAL_VENTA WHERE nombre = 'Mostrador')
 DECLARE @canal_delivery INT = (SELECT canal_id FROM CANAL_VENTA WHERE nombre = 'Delivery')
 DECLARE @canal_mesa_qr INT = (SELECT canal_id FROM CANAL_VENTA WHERE nombre = 'Mesa QR')
-DECLARE @canal_telefono INT = (SELECT canal_id FROM CANAL_VENTA WHERE nombre = 'Teléfono')
+DECLARE @canal_telefono INT = (SELECT canal_id FROM CANAL_VENTA WHERE nombre = 'Telefono')
 
 DECLARE @estado_cerrado INT = (SELECT estado_id FROM ESTADO_PEDIDO WHERE nombre = 'Cerrado')
 DECLARE @estado_entregado INT = (SELECT estado_id FROM ESTADO_PEDIDO WHERE nombre = 'Entregado')

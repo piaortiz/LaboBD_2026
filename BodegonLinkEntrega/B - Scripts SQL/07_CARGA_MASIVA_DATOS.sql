@@ -38,14 +38,14 @@ WHILE @i <= 3000
 BEGIN
     SET @nombre_cliente = CASE (@i % 20)
         WHEN 0 THEN 'Juan ' + CAST(@i AS VARCHAR)
-        WHEN 1 THEN 'María ' + CAST(@i AS VARCHAR)
+        WHEN 1 THEN 'Maria ' + CAST(@i AS VARCHAR)
         WHEN 2 THEN 'Carlos ' + CAST(@i AS VARCHAR)
         WHEN 3 THEN 'Ana ' + CAST(@i AS VARCHAR)
         WHEN 4 THEN 'Roberto ' + CAST(@i AS VARCHAR)
         WHEN 5 THEN 'Laura ' + CAST(@i AS VARCHAR)
         WHEN 6 THEN 'Diego ' + CAST(@i AS VARCHAR)
         WHEN 7 THEN 'Gabriela ' + CAST(@i AS VARCHAR)
-        WHEN 8 THEN 'Martín ' + CAST(@i AS VARCHAR)
+        WHEN 8 THEN 'Martin ' + CAST(@i AS VARCHAR)
         WHEN 9 THEN 'Valeria ' + CAST(@i AS VARCHAR)
         WHEN 10 THEN 'Sergio ' + CAST(@i AS VARCHAR)
         WHEN 11 THEN 'Patricia ' + CAST(@i AS VARCHAR)
@@ -56,8 +56,8 @@ BEGIN
         WHEN 16 THEN 'Gustavo ' + CAST(@i AS VARCHAR)
         WHEN 17 THEN 'Andrea ' + CAST(@i AS VARCHAR)
         WHEN 18 THEN 'Ricardo ' + CAST(@i AS VARCHAR)
-        ELSE 'Mónica ' + CAST(@i AS VARCHAR)
-    END + ' Pérez'
+        ELSE 'Monica ' + CAST(@i AS VARCHAR)
+    END + ' Perez'
 
     SET @telefono = '11' + RIGHT('0000' + CAST(@i AS VARCHAR), 4) + RIGHT('0000' + CAST(@i * 2 AS VARCHAR), 4)
     SET @email = 'cliente' + CAST(@i AS VARCHAR) + '@email.com'
@@ -186,7 +186,6 @@ DECLARE @canal_presencial INT = (SELECT canal_id FROM CANAL_VENTA WHERE nombre =
 DECLARE @canal_delivery INT = (SELECT canal_id FROM CANAL_VENTA WHERE nombre = 'Delivery')
 DECLARE @canal_mesa_qr INT = (SELECT canal_id FROM CANAL_VENTA WHERE nombre = 'Mesa QR')
 DECLARE @canal_telefono INT = (SELECT canal_id FROM CANAL_VENTA WHERE nombre = 'Telefono')
-DECLARE @canal_app INT = (SELECT canal_id FROM CANAL_VENTA WHERE nombre = 'App Movil')
 
 -- Validación de canales
 IF @canal_presencial IS NULL OR @canal_delivery IS NULL
@@ -210,13 +209,12 @@ BEGIN
     SET @fecha_pedido = DATEADD(HOUR, 11 + (@i % 11), @fecha_pedido) -- Horario comercial 11-22hs
     SET @fecha_pedido = DATEADD(MINUTE, @i % 60, @fecha_pedido)
 
-    -- Distribución de canales: 50% Mostrador, 25% Delivery, 15% Mesa QR, 7% Telefono, 3% App
+    -- Distribución de canales: 50% Mostrador, 30% Delivery, 15% Mesa QR, 5% Telefono
     SET @canal_id = CASE 
         WHEN @i % 100 < 50 THEN @canal_presencial
-        WHEN @i % 100 < 75 THEN @canal_delivery
-        WHEN @i % 100 < 90 AND @canal_mesa_qr IS NOT NULL THEN @canal_mesa_qr
-        WHEN @i % 100 < 97 AND @canal_telefono IS NOT NULL THEN @canal_telefono
-        WHEN @canal_app IS NOT NULL THEN @canal_app
+        WHEN @i % 100 < 80 THEN @canal_delivery
+        WHEN @i % 100 < 95 AND @canal_mesa_qr IS NOT NULL THEN @canal_mesa_qr
+        WHEN @canal_telefono IS NOT NULL THEN @canal_telefono
         ELSE @canal_presencial -- Fallback
     END
 

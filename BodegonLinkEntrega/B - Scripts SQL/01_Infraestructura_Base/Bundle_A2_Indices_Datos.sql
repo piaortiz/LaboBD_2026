@@ -91,8 +91,7 @@ INSERT INTO CANAL_VENTA (nombre) VALUES
 ('Mostrador'),
 ('Delivery'),
 ('Mesa QR'),
-('Teléfono'),
-('App Móvil')
+('Telefono')
 GO
 
 -- ─── ESTADOS DE PEDIDO ───────────────────────
@@ -162,20 +161,20 @@ DECLARE @suc_st          INT = (SELECT sucursal_id FROM SUCURSAL WHERE nombre LI
 
 -- GERENCIA (1 persona - horario completo)
 INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
-('María Fernández', 'maria.fernandez',
+('Maria Fernandez', 'maria.fernandez',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'gerente2026'), 2),
  @rol_gerente, @suc_st)
 
 -- MOZOS (6 personas - 3 turno almuerzo, 3 turno cena)
 -- Turno almuerzo (12:00-16:00)
 INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
-('Carlos Ramírez', 'carlos.ramirez',
+('Carlos Ramirez', 'carlos.ramirez',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'mozo2026'), 2),
  @rol_mozo, @suc_st),
-('Lucía Gómez', 'lucia.gomez',
+('Lucia Gomez', 'lucia.gomez',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'mozo2026'), 2),
  @rol_mozo, @suc_st),
-('Diego Martínez', 'diego.martinez',
+('Diego Martinez', 'diego.martinez',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'mozo2026'), 2),
  @rol_mozo, @suc_st)
 
@@ -184,16 +183,16 @@ INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUE
 ('Ana Torres', 'ana.torres',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'mozo2026'), 2),
  @rol_mozo, @suc_st),
-('Javier López', 'javier.lopez',
+('Javier Lopez', 'javier.lopez',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'mozo2026'), 2),
  @rol_mozo, @suc_st),
-('Sofía Benítez', 'sofia.benitez',
+('Sofia Benitez', 'sofia.benitez',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'mozo2026'), 2),
  @rol_mozo, @suc_st)
 
 -- CAJEROS (2 personas - 1 por turno)
 INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
-('Roberto Sánchez', 'roberto.sanchez',
+('Roberto Sanchez', 'roberto.sanchez',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'cajero2026'), 2),
  @rol_cajero, @suc_st),
 ('Patricia Morales', 'patricia.morales',
@@ -203,7 +202,7 @@ INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUE
 -- COCINEROS (4 personas - 2 por turno, parrilla a la leña requiere experiencia)
 -- Turno almuerzo
 INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
-('Eduardo "Tito" González', 'eduardo.gonzalez',
+('Eduardo "Tito" Gonzalez', 'eduardo.gonzalez',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'cocina2026'), 2),
  @rol_cocinero, @suc_st),
 ('Marta Navarro', 'marta.navarro',
@@ -212,7 +211,7 @@ INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUE
 
 -- Turno cena
 INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
-('Hernán Castro', 'hernan.castro',
+('Hernan Castro', 'hernan.castro',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'cocina2026'), 2),
  @rol_cocinero, @suc_st),
 ('Silvia Romero', 'silvia.romero',
@@ -221,10 +220,10 @@ INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUE
 
 -- REPARTIDORES (3 personas - solo turno cena, delivery nocturno)
 INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
-('Matías Pereyra', 'matias.pereyra',
+('Matias Pereyra', 'matias.pereyra',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'delivery2026'), 2),
  @rol_repartidor, @suc_st),
-('Fernando Díaz', 'fernando.diaz',
+('Fernando Diaz', 'fernando.diaz',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'delivery2026'), 2),
  @rol_repartidor, @suc_st),
 ('Rodrigo Vega', 'rodrigo.vega',
