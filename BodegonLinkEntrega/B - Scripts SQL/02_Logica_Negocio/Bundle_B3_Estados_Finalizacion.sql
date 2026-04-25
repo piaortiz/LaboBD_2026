@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- BUNDLE B3 - ESTADOS Y FINALIZACIÓN
 -- EsbirrosDB - Sistema de Gestión de Bodegón Porteño
 -- Negocio: Bodegón Los Esbirros de Claudio
@@ -21,7 +21,7 @@ PRINT 'Sistema: EsbirrosDB - Bodegon Los Esbirros de Claudio'
 PRINT ''
 
 -- =============================================
--- SP 1: CERRAR PEDIDO
+-- SP 1: CERRAR PEDIDOS
 -- =============================================
 
 PRINT 'Creando SP: sp_CerrarPedido...'
@@ -47,17 +47,17 @@ BEGIN
 
         SET @mensaje = ''
 
-        -- 1. VALIDAR PEDIDO
+        -- 1. VALIDAR PEDIDOS
         SELECT
             @pedido_existe = COUNT(*),
             @estado_actual = MAX(ep.nombre)
-        FROM PEDIDO p
-        INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+        FROM PEDIDOS p
+        INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
         WHERE p.pedido_id = @pedido_id
 
         IF @pedido_existe = 0
         BEGIN
-            SET @mensaje = 'Error: El pedido no existe'
+            SET @mensaje = 'Error: El PEDIDOS no existe'
             ROLLBACK TRANSACTION
             RETURN -1
         END
@@ -65,19 +65,19 @@ BEGIN
         -- 2. VALIDAR QUE NO ESTÉ YA CERRADO/CANCELADO
         IF @estado_actual IN ('Cerrado', 'Cancelado')
         BEGIN
-            SET @mensaje = 'Error: El pedido ya está ' + @estado_actual
+            SET @mensaje = 'Error: El PEDIDOS ya está ' + @estado_actual
             ROLLBACK TRANSACTION
             RETURN -2
         END
 
         -- 3. VALIDAR QUE TENGA ÍTEMS
         SELECT @tiene_items = COUNT(*)
-        FROM DETALLE_PEDIDO
+        FROM DETALLES_PEDIDOS
         WHERE pedido_id = @pedido_id
 
         IF @tiene_items = 0
         BEGIN
-            SET @mensaje = 'Error: No se puede cerrar un pedido sin ítems'
+            SET @mensaje = 'Error: No se puede cerrar un PEDIDOS sin ítems'
             ROLLBACK TRANSACTION
             RETURN -3
         END
@@ -90,7 +90,7 @@ BEGIN
 
         -- 5. OBTENER ID DEL ESTADO "CERRADO"
         SELECT @estado_cerrado_id = estado_id
-        FROM ESTADO_PEDIDO
+        FROM ESTADOS_PEDIDOS
         WHERE nombre = 'Cerrado'
 
         IF @estado_cerrado_id IS NULL
@@ -100,14 +100,14 @@ BEGIN
             RETURN -4
         END
 
-        -- 6. CERRAR EL PEDIDO
-        UPDATE PEDIDO
+        -- 6. CERRAR EL PEDIDOS
+        UPDATE PEDIDOS
         SET
             estado_id     = @estado_cerrado_id,
             fecha_entrega = GETDATE()
         WHERE pedido_id = @pedido_id
 
-        SET @mensaje = 'Pedido cerrado exitosamente. Total: $' + CAST(@total_calculado AS VARCHAR)
+        SET @mensaje = 'PEDIDOS cerrado exitosamente. Total: $' + CAST(@total_calculado AS VARCHAR)
 
         COMMIT TRANSACTION
         RETURN 0
@@ -122,7 +122,7 @@ END
 GO
 
 -- =============================================
--- SP 2: CANCELAR PEDIDO
+-- SP 2: CANCELAR PEDIDOS
 -- =============================================
 
 PRINT 'Creando SP: sp_CancelarPedido...'
@@ -148,17 +148,17 @@ BEGIN
 
         SET @mensaje = ''
 
-        -- 1. VALIDAR PEDIDO
+        -- 1. VALIDAR PEDIDOS
         SELECT
             @pedido_existe = COUNT(*),
             @estado_actual = MAX(ep.nombre)
-        FROM PEDIDO p
-        INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+        FROM PEDIDOS p
+        INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
         WHERE p.pedido_id = @pedido_id
 
         IF @pedido_existe = 0
         BEGIN
-            SET @mensaje = 'Error: El pedido no existe'
+            SET @mensaje = 'Error: El PEDIDOS no existe'
             ROLLBACK TRANSACTION
             RETURN -1
         END
@@ -166,14 +166,14 @@ BEGIN
         -- 2. VALIDAR QUE NO ESTÉ YA CERRADO/CANCELADO
         IF @estado_actual IN ('Cerrado', 'Cancelado')
         BEGIN
-            SET @mensaje = 'Error: No se puede cancelar un pedido ' + @estado_actual
+            SET @mensaje = 'Error: No se puede cancelar un PEDIDOS ' + @estado_actual
             ROLLBACK TRANSACTION
             RETURN -2
         END
 
         -- 3. OBTENER ID DEL ESTADO "CANCELADO"
         SELECT @estado_cancelado_id = estado_id
-        FROM ESTADO_PEDIDO
+        FROM ESTADOS_PEDIDOS
         WHERE nombre = 'Cancelado'
 
         IF @estado_cancelado_id IS NULL
@@ -183,8 +183,8 @@ BEGIN
             RETURN -3
         END
 
-        -- 4. CANCELAR EL PEDIDO (registrar motivo en observaciones)
-        UPDATE PEDIDO
+        -- 4. CANCELAR EL PEDIDOS (registrar motivo en observaciones)
+        UPDATE PEDIDOS
         SET
             estado_id     = @estado_cancelado_id,
             fecha_entrega = GETDATE(),
@@ -196,7 +196,7 @@ BEGIN
                 END
         WHERE pedido_id = @pedido_id
 
-        SET @mensaje = 'Pedido cancelado exitosamente'
+        SET @mensaje = 'PEDIDOS cancelado exitosamente'
         IF @motivo IS NOT NULL
             SET @mensaje = @mensaje + '. Motivo: ' + @motivo
 
@@ -213,9 +213,9 @@ END
 GO
 
 -- =============================================
--- SP 3: ACTUALIZAR ESTADO DE PEDIDO
--- Permite avanzar un pedido al siguiente estado
--- en la secuencia definida por ESTADO_PEDIDO.orden
+-- SP 3: ACTUALIZAR ESTADO DE PEDIDOS
+-- Permite avanzar un PEDIDOS al siguiente estado
+-- en la secuencia definida por ESTADOS_PEDIDOS.orden
 -- =============================================
 
 PRINT 'Creando SP: sp_ActualizarEstadoPedido...'
@@ -244,18 +244,18 @@ BEGIN
 
         SET @mensaje = ''
 
-        -- 1. VALIDAR PEDIDO
+        -- 1. VALIDAR PEDIDOS
         SELECT
             @pedido_existe = COUNT(*),
             @estado_actual = MAX(ep.nombre),
             @orden_actual  = MAX(ep.orden)
-        FROM PEDIDO p
-        INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+        FROM PEDIDOS p
+        INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
         WHERE p.pedido_id = @pedido_id
 
         IF @pedido_existe = 0
         BEGIN
-            SET @mensaje = 'Error: El pedido no existe'
+            SET @mensaje = 'Error: El PEDIDOS no existe'
             ROLLBACK TRANSACTION
             RETURN -1
         END
@@ -263,7 +263,7 @@ BEGIN
         -- 2. VALIDAR QUE NO ESTÉ YA CERRADO/CANCELADO
         IF @estado_actual IN ('Cerrado', 'Cancelado')
         BEGIN
-            SET @mensaje = 'Error: El pedido ya está ' + @estado_actual + ' y no se puede modificar'
+            SET @mensaje = 'Error: El PEDIDOS ya está ' + @estado_actual + ' y no se puede modificar'
             ROLLBACK TRANSACTION
             RETURN -2
         END
@@ -272,7 +272,7 @@ BEGIN
         SELECT
             @nuevo_estado_id = estado_id,
             @orden_nuevo     = orden
-        FROM ESTADO_PEDIDO
+        FROM ESTADOS_PEDIDOS
         WHERE nombre = @nuevo_estado
 
         IF @nuevo_estado_id IS NULL
@@ -287,7 +287,7 @@ BEGIN
         -- Excepción: Cancelado (orden=99) se maneja con sp_CancelarPedido
         IF @orden_nuevo = 99
         BEGIN
-            SET @mensaje = 'Error: Para cancelar un pedido use sp_CancelarPedido'
+            SET @mensaje = 'Error: Para cancelar un PEDIDOS use sp_CancelarPedido'
             ROLLBACK TRANSACTION
             RETURN -4
         END
@@ -311,27 +311,27 @@ BEGIN
             RETURN -6
         END
 
-        -- 5. VALIDAR EMPLEADO DE ENTREGA (RN-006.4)
+        -- 5. VALIDAR EMPLEADOS DE ENTREGA (RN-006.4)
         IF @nuevo_estado = 'Entregado'
         BEGIN
             IF @entregado_por_empleado_id IS NULL
             BEGIN
-                SET @mensaje = 'Error: Para marcar como "Entregado" se requiere el empleado de entrega'
+                SET @mensaje = 'Error: Para marcar como "Entregado" se requiere el EMPLEADOS de entrega'
                 ROLLBACK TRANSACTION
                 RETURN -7
             END
 
-            -- Validar que el empleado existe y está activo
-            IF NOT EXISTS (SELECT 1 FROM EMPLEADO WHERE empleado_id = @entregado_por_empleado_id AND activo = 1)
+            -- Validar que el EMPLEADOS existe y está activo
+            IF NOT EXISTS (SELECT 1 FROM EMPLEADOS WHERE empleado_id = @entregado_por_empleado_id AND activo = 1)
             BEGIN
-                SET @mensaje = 'Error: El empleado de entrega no existe o no está activo'
+                SET @mensaje = 'Error: El EMPLEADOS de entrega no existe o no está activo'
                 ROLLBACK TRANSACTION
                 RETURN -8
             END
         END
 
         -- 6. ACTUALIZAR ESTADO
-        UPDATE PEDIDO
+        UPDATE PEDIDOS
         SET
             estado_id                 = @nuevo_estado_id,
             entregado_por_empleado_id = CASE

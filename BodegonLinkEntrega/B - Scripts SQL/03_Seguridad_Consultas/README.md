@@ -1,4 +1,4 @@
-# SEGURIDAD Y CONSULTAS - EsbirrosDB
+﻿# SEGURIDAD Y CONSULTAS - EsbirrosDB
 
 **Orden de ejecución:** PASO 3  
 **Dependencias:** 01_Infraestructura_Base + 02_Logica_Negocio completados
@@ -12,7 +12,7 @@
 - **Crea:**
   - 7 roles de base de datos: `rol_administrador`, `rol_gerente`, `rol_cajero`,
     `rol_mesero`, `rol_cocinero`, `rol_delivery`, `rol_auditor`
-  - Permisos granulares por rol (SELECT, INSERT, UPDATE, EXECUTE según función)
+  - Permisos granulares por ROLES (SELECT, INSERT, UPDATE, EXECUTE según función)
   - Usuarios sin login para aplicación: `app_esbirros_web`, `app_esbirros_reportes`,
     `app_esbirros_delivery`
   - SP de auditoría de seguridad: `sp_AuditoriaSeguridad`
@@ -21,7 +21,7 @@
 - **Propósito:** Vistas y consultas base del sistema
 - **Tiempo estimado:** 1 minuto
 - **Crea:** Vistas base (`vw_PedidosCompletos`, etc.) y SPs de consulta frecuente
-- `sp_ConsultarPedidosPorEstado` usa STRING_AGG para agregar platos del pedido
+- `sp_ConsultarPedidosPorEstado` usa STRING_AGG para agregar platos del PEDIDOS
 
 ## ORDEN DE EJECUCIÓN
 
@@ -53,7 +53,7 @@ WHERE name LIKE 'vw_%'
 
 ## MODELO DE SEGURIDAD
 
-| **Rol** | **Tablas principales** | **SPs** |
+| **ROLES** | **Tablas principales** | **SPs** |
 |---------|----------------------|---------|
 | `rol_administrador` | Full (SELECT/INSERT/UPDATE/DELETE) | EXECUTE todos |
 | `rol_gerente` | SELECT all, INSERT/UPDATE pedidos | EXECUTE reportes |

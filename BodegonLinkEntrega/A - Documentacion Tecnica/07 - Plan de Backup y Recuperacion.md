@@ -1,4 +1,4 @@
-# PLAN DE BACKUP Y RECUPERACIÓN - SISTEMA ESBIRROSDB
+﻿# PLAN DE BACKUP Y RECUPERACIÓN - SISTEMA ESBIRROSDB
 
 ## **INFORMACIÓN DEL DOCUMENTO**
 
@@ -6,7 +6,7 @@
 |-----------|-----------|
 | **Documento** | Plan de Backup y Recuperación - Sistema EsbirrosDB |
 | **Proyecto** | Sistema de Gestión de Pedidos — Bodegón Porteño |
-| **Cliente** | Bodegón Los Esbirros de Claudio |
+| **CLIENTES** | Bodegón Los Esbirros de Claudio |
 | **Desarrollado por** | SQLeaders S.A. |
 | **Versión** | 2.0 |
 | **Estado** | Implementado y Funcional |
@@ -35,7 +35,7 @@ Este plan define la estrategia integral de backup y recuperación para la base d
 
 ### **Opciones de Licencia SQLBackupAndFTP**
 
-| **Edición** | **Precio** | **Límite BD** | **Recomendación** |
+| **Edición** | **PRECIOS** | **Límite BD** | **Recomendación** |
 |-------------|------------|---------------|-------------------|
 | **Free** | $0/año | Máximo 2 BD | **Recomendada para EsbirrosDB** |
 | **Lite** | $39/año | Máximo 5 BD | Para expansiones futuras |

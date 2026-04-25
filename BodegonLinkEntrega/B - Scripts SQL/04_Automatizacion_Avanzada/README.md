@@ -1,4 +1,4 @@
-# AUTOMATIZACIÓN AVANZADA - EsbirrosDB
+﻿# AUTOMATIZACIÓN AVANZADA - EsbirrosDB
 
 **Orden de ejecución:** PASO 4  
 **Dependencias:** Pasos 1-3 completados
@@ -9,18 +9,18 @@
 - **Propósito:** Triggers de totales automáticos y auditoría principal
 - **Tiempo estimado:** 1 minuto
 - **Crea:**
-  - `tr_ActualizarTotales` — Recalcula `PEDIDO.total` automáticamente en INSERT/UPDATE/DELETE sobre DETALLE_PEDIDO
-  - `tr_AuditoriaPedidos` — Registra cambios de estado y monto en AUDITORIA_SIMPLE
-  - `tr_AuditoriaDetalle` — Registra INSERT/DELETE de ítems en AUDITORIA_SIMPLE
-  - Tabla auxiliar: `AUDITORIA_SIMPLE`
+  - `tr_ActualizarTotales` — Recalcula `PEDIDOS.total` automáticamente en INSERT/UPDATE/DELETE sobre DETALLES_PEDIDOS
+  - `tr_AuditoriaPedidos` — Registra cambios de estado y monto en AUDITORIAS_SIMPLES
+  - `tr_AuditoriaDetalle` — Registra INSERT/DELETE de ítems en AUDITORIAS_SIMPLES
+  - Tabla auxiliar: `AUDITORIAS_SIMPLES`
 
 ### **Bundle_E2_Control_Avanzado.sql**
 - **Propósito:** Control de inventario simulado y sistema de notificaciones
 - **Tiempo estimado:** 1 minuto
 - **Crea:**
   - `tr_ValidarStock` — Verifica stock disponible al agregar ítems
-  - `tr_SistemaNotificaciones` — Genera notificaciones automáticas al cambiar estado de pedido
-  - Tabla auxiliar: `STOCK_SIMULADO` (100 unidades por plato al inicio)
+  - `tr_SistemaNotificaciones` — Genera notificaciones automáticas al cambiar estado de PEDIDOS
+  - Tabla auxiliar: `STOCKS_SIMULADOS` (100 unidades por PLATOS al inicio)
   - Tabla auxiliar: `NOTIFICACIONES`
   - SPs: `sp_ConsultarNotificaciones`, `sp_MarcarNotificacionLeida`, `sp_ConsultarStock`
 
@@ -45,19 +45,19 @@ WHERE name IN (
 
 -- Verificar tablas auxiliares
 SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
-WHERE TABLE_NAME IN ('AUDITORIA_SIMPLE','STOCK_SIMULADO','NOTIFICACIONES')
+WHERE TABLE_NAME IN ('AUDITORIAS_SIMPLES','STOCKS_SIMULADOS','NOTIFICACIONES')
 -- Esperado: 3 tablas
 
 -- Verificar stock inicial cargado
-SELECT COUNT(*) FROM STOCK_SIMULADO
+SELECT COUNT(*) FROM STOCKS_SIMULADOS
 -- Esperado: igual al número de platos (22)
 ```
 
 ## FUNCIONALIDAD DE NOTIFICACIONES
 
 Las notificaciones se generan automáticamente cuando:
-- Un pedido pasa a estado **Listo** → notificación a MOZOS (prioridad ALTA)
-- Un pedido pasa a estado **Cerrado** → notificación a CAJA (prioridad NORMAL)
+- Un PEDIDOS pasa a estado **Listo** → notificación a MOZOS (prioridad ALTA)
+- Un PEDIDOS pasa a estado **Cerrado** → notificación a CAJA (prioridad NORMAL)
 
 ```sql
 -- Consultar notificaciones no leídas para mozos

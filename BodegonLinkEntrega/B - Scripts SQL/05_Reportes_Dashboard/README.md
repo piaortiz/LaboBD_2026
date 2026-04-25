@@ -1,4 +1,4 @@
-# REPORTES Y DASHBOARD - EsbirrosDB
+﻿# REPORTES Y DASHBOARD - EsbirrosDB
 
 **Orden de ejecución:** PASO 5  
 **Dependencias:** Todos los pasos anteriores (1-4) completados
@@ -20,7 +20,7 @@
 - **Propósito:** Vistas de dashboard ejecutivo y monitoreo en tiempo real
 - **Tiempo estimado:** 2 minutos
 - **Crea:**
-  - `vw_DashboardEjecutivo` — KPIs del día y del mes (ventas, pedidos, ticket promedio, plato top)
+  - `vw_DashboardEjecutivo` — KPIs del día y del mes (ventas, pedidos, ticket promedio, PLATOS top)
   - `vw_MonitoreoTiempoReal` — Estado operativo actual (mesas, cocina, facturación en curso)
 
 ## ORDEN DE EJECUCIÓN
@@ -63,7 +63,7 @@ EXEC sp_ReporteVentasDiario
 -- Top 5 platos más vendidos hoy
 EXEC sp_PlatosMasVendidosDiario @top_cantidad = 5
 
--- Rendimiento por canal (Mesa, Mostrador, Delivery)
+-- Rendimiento por canal (MESAS, Mostrador, Delivery)
 EXEC sp_RendimientoCanalDiario
 
 -- Análisis mensual completo

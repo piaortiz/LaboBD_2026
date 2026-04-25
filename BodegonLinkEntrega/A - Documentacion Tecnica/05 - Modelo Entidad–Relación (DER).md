@@ -1,4 +1,4 @@
-# MODELO ENTIDAD-RELACIÓN — SISTEMA ESBIRROSDB
+﻿# MODELO ENTIDAD-RELACIÓN — SISTEMA ESBIRROSDB
 
 ## **INFORMACIÓN DEL DOCUMENTO**
 
@@ -6,7 +6,7 @@
 |-------------------|--------------------------------------------------|
 | **Documento**     | Modelo Entidad-Relación (DER) — EsbirrosDB       |
 | **Proyecto**      | Sistema de Gestión de Bodegón Porteño            |
-| **Cliente**       | Bodegón Los Esbirros de Claudio                  |
+| **CLIENTES**       | Bodegón Los Esbirros de Claudio                  |
 | **Instituto**     | ISTEA                                            |
 | **Versión**       | 2.0                                              |
 | **Estado**        | Implementado y Funcional                         |
@@ -23,13 +23,13 @@ Presenta el Modelo Entidad-Relación del sistema **EsbirrosDB**, diseñado para 
 | **Métrica**           | **Valor** |
 |-----------------------|-----------|
 | Entidades (tablas A1) | 12        |
-| Tablas auxiliares     | 4 (AUDITORIA_SIMPLE, STOCK_SIMULADO, NOTIFICACIONES, REPORTES_GENERADOS) |
+| Tablas auxiliares     | 4 (AUDITORIAS_SIMPLES, STOCKS_SIMULADOS, NOTIFICACIONES, REPORTES_GENERADOS) |
 | **Total tablas**      | **16**    |
 | Relaciones FK         | 17        |
 | Módulos funcionales   | 7         |
 
 ### Decisiones de Diseño
-- **`DETALLE_PEDIDO` directo:** `plato_id NOT NULL`, cada ítem referencia un plato individual
+- **`DETALLES_PEDIDOS` directo:** `plato_id NOT NULL`, cada ítem referencia un PLATOS individual
 - **Contexto de negocio:** bodegón porteño (cocina a la leña, pastas, carnes)
 
 ---
@@ -43,24 +43,24 @@ erDiagram
 
     %% ─── CATÁLOGOS ───────────────────────────────────────────
 
-    SUCURSAL {
+    SUCURSALES {
         int     sucursal_id  PK
         nvarchar nombre      UK
         nvarchar direccion
     }
 
-    CANAL_VENTA {
+    CANALES_VENTAS {
         int     canal_id  PK
         nvarchar nombre   UK
     }
 
-    ESTADO_PEDIDO {
+    ESTADOS_PEDIDOS {
         int     estado_id PK
         nvarchar nombre   UK
         int     orden     UK
     }
 
-    ROL {
+    ROLES {
         int     rol_id      PK
         nvarchar nombre     UK
         nvarchar descripcion
@@ -68,7 +68,7 @@ erDiagram
 
     %% ─── PERSONAL Y UBICACIÓN ────────────────────────────────
 
-    MESA {
+    MESAS {
         int     mesa_id     PK
         int     numero
         int     capacidad
@@ -77,7 +77,7 @@ erDiagram
         bit     activa
     }
 
-    EMPLEADO {
+    EMPLEADOS {
         int     empleado_id   PK
         nvarchar nombre
         nvarchar usuario      UK
@@ -89,7 +89,7 @@ erDiagram
 
     %% ─── CLIENTES Y DOMICILIOS ───────────────────────────────
 
-    CLIENTE {
+    CLIENTES {
         int     cliente_id PK
         nvarchar nombre
         nvarchar telefono
@@ -98,7 +98,7 @@ erDiagram
         nvarchar doc_nro
     }
 
-    DOMICILIO {
+    DOMICILIOS {
         int     domicilio_id  PK
         int     cliente_id    FK
         nvarchar calle
@@ -109,29 +109,30 @@ erDiagram
         nvarchar provincia
         nvarchar observaciones
         bit     es_principal
+        nvarchar tipo_domicilio
     }
 
     %% ─── PRODUCTOS Y PRECIOS ─────────────────────────────────
 
 
-    PLATO {
+    PLATOS {
         int     plato_id  PK
         nvarchar nombre   UK
         nvarchar categoria
         bit     activo
     }
 
-    PRECIO {
+    PRECIOS {
         int     precio_id      PK
         int     plato_id       FK
         date    vigencia_desde
         date    vigencia_hasta
-        decimal precio
+        decimal monto
     }
 
     %% ─── PEDIDOS ─────────────────────────────────────────────
 
-    PEDIDO {
+    PEDIDOS {
         int     pedido_id                 PK
         datetime fecha_pedido
         datetime fecha_entrega
@@ -147,7 +148,7 @@ erDiagram
         nvarchar observaciones
     }
 
-    DETALLE_PEDIDO {
+    DETALLES_PEDIDOS {
         int     detalle_id      PK
         int     pedido_id       FK
         int     plato_id        FK
@@ -157,11 +158,11 @@ erDiagram
     }
 
     %% ─── AUDITORÍA ───────────────────────────────────────────
-    %% Tabla AUDITORIA eliminada (v2.0) — se usa AUDITORIA_SIMPLE (Bundle E1)
+    %% Tabla AUDITORIA eliminada (v2.0) — se usa AUDITORIAS_SIMPLES (Bundle E1)
 
     %% ─── TABLAS AUXILIARES (Bundles E1, E2, R1) ──────────────
 
-    AUDITORIA_SIMPLE {
+    AUDITORIAS_SIMPLES {
         int      auditoria_id    PK
         nvarchar tabla_afectada
         int      registro_id
@@ -171,7 +172,7 @@ erDiagram
         nvarchar datos_resumen
     }
 
-    STOCK_SIMULADO {
+    STOCKS_SIMULADOS {
         int      plato_id             PK "FK"
         int      stock_disponible
         int      stock_minimo
@@ -206,31 +207,31 @@ erDiagram
 
     %% ─── RELACIONES ──────────────────────────────────────────
 
-    SUCURSAL      ||--o{ MESA      : "tiene mesas"
-    SUCURSAL      ||--o{ EMPLEADO  : "tiene empleados"
-    ROL           ||--o{ EMPLEADO  : "asigna rol"
+    SUCURSALES      ||--o{ MESAS      : "tiene mesas"
+    SUCURSALES      ||--o{ EMPLEADOS  : "tiene empleados"
+    ROLES           ||--o{ EMPLEADOS  : "asigna ROLES"
 
-    CLIENTE       ||--o{ DOMICILIO : "tiene domicilios"
-    CLIENTE       |o--o{ PEDIDO    : "realiza"
-    DOMICILIO     |o--o{ PEDIDO    : "dirección de entrega"
+    CLIENTES       ||--o{ DOMICILIOS : "tiene domicilios"
+    CLIENTES       |o--o{ PEDIDOS    : "realiza"
+    DOMICILIOS     |o--o{ PEDIDOS    : "dirección de entrega"
 
-    CANAL_VENTA   ||--o{ PEDIDO    : "canal de venta"
-    ESTADO_PEDIDO ||--o{ PEDIDO    : "estado actual"
-    MESA          |o--o{ PEDIDO    : "mesa asignada"
+    CANALES_VENTAS   ||--o{ PEDIDOS    : "canal de venta"
+    ESTADOS_PEDIDOS ||--o{ PEDIDOS    : "estado actual"
+    MESAS          |o--o{ PEDIDOS    : "MESAS asignada"
 
-    EMPLEADO      ||--o{ PEDIDO    : "tomado por"
-    EMPLEADO      |o--o{ PEDIDO    : "entregado por"
+    EMPLEADOS      ||--o{ PEDIDOS    : "tomado por"
+    EMPLEADOS      |o--o{ PEDIDOS    : "entregado por"
 
-    PEDIDO        ||--o{ DETALLE_PEDIDO : "contiene ítems"
+    PEDIDOS        ||--o{ DETALLES_PEDIDOS : "contiene ítems"
 
-    PLATO         ||--o{ DETALLE_PEDIDO : "incluido en pedido"
-    PLATO         ||--o{ PRECIO         : "historial de precios"
+    PLATOS         ||--o{ DETALLES_PEDIDOS : "incluido en PEDIDOS"
+    PLATOS         ||--o{ PRECIOS         : "historial de precios"
 
     %% Relaciones tablas auxiliares
-    PLATO           ||--o| STOCK_SIMULADO     : "stock por plato"
-    PEDIDO          |o--o{ NOTIFICACIONES     : "genera notificación"
-    MESA            |o--o{ NOTIFICACIONES     : "notifica mesa"
-    SUCURSAL        |o--o{ REPORTES_GENERADOS : "reporte por sucursal"
+    PLATOS           ||--o| STOCKS_SIMULADOS     : "stock por PLATOS"
+    PEDIDOS          |o--o{ NOTIFICACIONES     : "genera notificación"
+    MESAS            |o--o{ NOTIFICACIONES     : "notifica MESAS"
+    SUCURSALES        |o--o{ REPORTES_GENERADOS : "reporte por SUCURSALES"
 ```
 
 ---
@@ -238,75 +239,75 @@ erDiagram
 ## **DESCRIPCIÓN DE MÓDULOS**
 
 ### Módulo 1 — Catálogos Base
-| Tabla | Rol | Cardinalidad clave |
+| Tabla | ROLES | Cardinalidad clave |
 |-------|-----|--------------------|
-| `SUCURSAL` | Hub central del sistema | 1:N con MESA y EMPLEADO |
-| `CANAL_VENTA` | Catalog de canales (Mesa QR, Delivery, etc.) | 1:N con PEDIDO |
-| `ESTADO_PEDIDO` | Estados ordenados del flujo | 1:N con PEDIDO |
-| `ROL` | Roles del personal | 1:N con EMPLEADO |
+| `SUCURSALES` | Hub central del sistema | 1:N con MESAS y EMPLEADOS |
+| `CANALES_VENTAS` | Catalog de canales (MESAS QR, Delivery, etc.) | 1:N con PEDIDOS |
+| `ESTADOS_PEDIDOS` | Estados ordenados del flujo | 1:N con PEDIDOS |
+| `ROLES` | Roles del personal | 1:N con EMPLEADOS |
 
 ### Módulo 2 — Personal y Ubicación
-| Tabla | Rol | Cardinalidad clave |
+| Tabla | ROLES | Cardinalidad clave |
 |-------|-----|--------------------|
-| `MESA` | Mesas físicas con QR | N:1 con SUCURSAL |
-| `EMPLEADO` | Personal con autenticación | N:1 con ROL y SUCURSAL |
+| `MESAS` | Mesas físicas con QR | N:1 con SUCURSALES |
+| `EMPLEADOS` | Personal con autenticación | N:1 con ROLES y SUCURSALES |
 
 ### Módulo 3 — Clientes
-| Tabla | Rol | Cardinalidad clave |
+| Tabla | ROLES | Cardinalidad clave |
 |-------|-----|--------------------|
-| `CLIENTE` | Datos del cliente | 1:N con DOMICILIO |
-| `DOMICILIO` | Direcciones de entrega | N:1 con CLIENTE |
+| `CLIENTES` | Datos del CLIENTES | 1:N con DOMICILIOS |
+| `DOMICILIOS` | Direcciones de entrega | N:1 con CLIENTES |
 
 ### Módulo 4 — Productos y Precios
-| Tabla | Rol | Cardinalidad clave |
+| Tabla | ROLES | Cardinalidad clave |
 |-------|-----|--------------------|
-| `PLATO` | Catálogo del menú (pastas, carnes, bebidas…) | 1:N con PRECIO, DETALLE_PEDIDO |
-| `PRECIO` | Historial de precios con vigencia temporal | N:1 con PLATO |
+| `PLATOS` | Catálogo del menú (pastas, carnes, bebidas…) | 1:N con PRECIOS, DETALLES_PEDIDOS |
+| `PRECIOS` | Historial de precios con vigencia temporal | N:1 con PLATOS |
 
 ### Módulo 5 — Pedidos
-| Tabla | Rol | Cardinalidad clave |
+| Tabla | ROLES | Cardinalidad clave |
 |-------|-----|--------------------|
-| `PEDIDO` | Entidad central de transacciones | N:1 con múltiples catálogos |
-| `DETALLE_PEDIDO` | Líneas de pedido (siempre un plato) | N:1 con PEDIDO y PLATO |
+| `PEDIDOS` | Entidad central de transacciones | N:1 con múltiples catálogos |
+| `DETALLES_PEDIDOS` | Líneas de PEDIDOS (siempre un PLATOS) | N:1 con PEDIDOS y PLATOS |
 
 ### Módulo 6 — Auditoría
-| Tabla | Rol | Cardinalidad clave |
+| Tabla | ROLES | Cardinalidad clave |
 |-------|-----|--------------------|
-| *(Tabla AUDITORIA eliminada v2.0 — la auditoría se maneja con AUDITORIA_SIMPLE, creada por Bundle E1)* | | |
+| *(Tabla AUDITORIA eliminada v2.0 — la auditoría se maneja con AUDITORIAS_SIMPLES, creada por Bundle E1)* | | |
 
 ### Módulo 7 — Reportes
-| Tabla | Rol | Cardinalidad clave |
+| Tabla | ROLES | Cardinalidad clave |
 |-------|-----|--------------------|
-| `REPORTES_GENERADOS` | Registro de reportes ejecutados | N:1 con SUCURSAL |
+| `REPORTES_GENERADOS` | Registro de reportes ejecutados | N:1 con SUCURSALES |
 
 ### Tablas auxiliares (creadas por Bundles E1/E2/R1)
 | Tabla | Bundle | Propósito | FK |
 |-------|--------|-----------|----|
-| `AUDITORIA_SIMPLE` | E1 | Log simplificado de INSERT/UPDATE/DELETE | — |
-| `STOCK_SIMULADO` | E2 | Inventario simulado por plato | `plato_id` → PLATO |
-| `NOTIFICACIONES` | E2 | Alertas automáticas de estado de pedidos | `pedido_id` → PEDIDO, `mesa_id` → MESA |
-| `REPORTES_GENERADOS` | R1 | Registro de reportes generados por SPs | `sucursal_id` → SUCURSAL |
+| `AUDITORIAS_SIMPLES` | E1 | Log simplificado de INSERT/UPDATE/DELETE | — |
+| `STOCKS_SIMULADOS` | E2 | Inventario simulado por PLATOS | `plato_id` → PLATOS |
+| `NOTIFICACIONES` | E2 | Alertas automáticas de estado de pedidos | `pedido_id` → PEDIDOS, `mesa_id` → MESAS |
+| `REPORTES_GENERADOS` | R1 | Registro de reportes generados por SPs | `sucursal_id` → SUCURSALES |
 
 ---
 
 ## **FLUJOS DE DATOS CRÍTICOS**
 
-### Flujo 1 — Pedido en Salón (Mesa QR)
+### Flujo 1 — PEDIDOS en Salón (MESAS QR)
 ```
-CANAL_VENTA (Mesa QR) → PEDIDO → DETALLE_PEDIDO → PLATO → PRECIO
-                    ↗ MESA ↗ EMPLEADO (mozo)
+CANALES_VENTAS (MESAS QR) → PEDIDOS → DETALLES_PEDIDOS → PLATOS → PRECIOS
+                    ↗ MESAS ↗ EMPLEADOS (mozo)
 ```
 
-### Flujo 2 — Pedido Delivery
+### Flujo 2 — PEDIDOS Delivery
 ```
-CANAL_VENTA (Delivery) → PEDIDO → DETALLE_PEDIDO → PLATO
-                      ↗ CLIENTE → DOMICILIO
-                      ↗ EMPLEADO (tomado) + EMPLEADO (entregado)
+CANALES_VENTAS (Delivery) → PEDIDOS → DETALLES_PEDIDOS → PLATOS
+                      ↗ CLIENTES → DOMICILIOS
+                      ↗ EMPLEADOS (tomado) + EMPLEADOS (entregado)
 ```
 
 ### Flujo 3 — Trazabilidad
 ```
-PEDIDO (UPDATE estado) → tr_AuditoriaPedidos → AUDITORIA_SIMPLE
+PEDIDOS (UPDATE estado) → tr_AuditoriaPedidos → AUDITORIAS_SIMPLES
                        → tr_SistemaNotificaciones → NOTIFICACIONES
 ```
 

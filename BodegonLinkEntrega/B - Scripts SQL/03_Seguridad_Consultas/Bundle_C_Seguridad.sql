@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- BUNDLE C - SEGURIDAD
 -- EsbirrosDB - Sistema de Gestión de Bodegón Porteño
 -- Negocio: Bodegón Los Esbirros de Claudio
@@ -6,6 +6,11 @@
 -- Proyecto Educativo ISTEA - Uso académico exclusivo
 -- PROHIBIDA LA COMERCIALIZACIÓN
 -- =============================================
+
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_NULLS ON
+GO
 
 USE EsbirrosDB
 GO
@@ -22,140 +27,135 @@ PRINT ''
 PRINT 'Paso 1/3: Creando roles de seguridad...'
 
 IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_administrador')
-BEGIN CREATE ROLE [rol_administrador]; PRINT 'Rol rol_administrador creado'; END
-ELSE PRINT 'Rol rol_administrador ya existe';
+BEGIN CREATE ROLE [rol_administrador]; PRINT 'ROLES rol_administrador creado'; END
+ELSE PRINT 'ROLES rol_administrador ya existe';
 
 IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_empleado')
-BEGIN CREATE ROLE [rol_empleado]; PRINT 'Rol rol_empleado creado'; END
-ELSE PRINT 'Rol rol_empleado ya existe';
+BEGIN CREATE ROLE [rol_empleado]; PRINT 'ROLES rol_empleado creado'; END
+ELSE PRINT 'ROLES rol_empleado ya existe';
 
 IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_cajero')
-BEGIN CREATE ROLE [rol_cajero]; PRINT 'Rol rol_cajero creado'; END
-ELSE PRINT 'Rol rol_cajero ya existe';
+BEGIN CREATE ROLE [rol_cajero]; PRINT 'ROLES rol_cajero creado'; END
+ELSE PRINT 'ROLES rol_cajero ya existe';
 
 IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_delivery')
-BEGIN CREATE ROLE [rol_delivery]; PRINT 'Rol rol_delivery creado'; END
-ELSE PRINT 'Rol rol_delivery ya existe';
+BEGIN CREATE ROLE [rol_delivery]; PRINT 'ROLES rol_delivery creado'; END
+ELSE PRINT 'ROLES rol_delivery ya existe';
 
 IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_cliente')
-BEGIN CREATE ROLE [rol_cliente]; PRINT 'Rol rol_cliente creado'; END
-ELSE PRINT 'Rol rol_cliente ya existe';
+BEGIN CREATE ROLE [rol_cliente]; PRINT 'ROLES rol_cliente creado'; END
+ELSE PRINT 'ROLES rol_cliente ya existe';
 
 IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_reportes')
-BEGIN CREATE ROLE [rol_reportes]; PRINT 'Rol rol_reportes creado'; END
-ELSE PRINT 'Rol rol_reportes ya existe';
+BEGIN CREATE ROLE [rol_reportes]; PRINT 'ROLES rol_reportes creado'; END
+ELSE PRINT 'ROLES rol_reportes ya existe';
 
 IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_aplicacion_web')
-BEGIN CREATE ROLE [rol_aplicacion_web]; PRINT 'Rol rol_aplicacion_web creado'; END
-ELSE PRINT 'Rol rol_aplicacion_web ya existe';
+BEGIN CREATE ROLE [rol_aplicacion_web]; PRINT 'ROLES rol_aplicacion_web creado'; END
+ELSE PRINT 'ROLES rol_aplicacion_web ya existe';
 
--- HM-10: Rol cocinero
+-- HM-10: ROLES cocinero
 IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_cocinero')
-BEGIN CREATE ROLE [rol_cocinero]; PRINT 'Rol rol_cocinero creado'; END
-ELSE PRINT 'Rol rol_cocinero ya existe';
+BEGIN CREATE ROLE [rol_cocinero]; PRINT 'ROLES rol_cocinero creado'; END
+ELSE PRINT 'ROLES rol_cocinero ya existe';
 
--- Rol mozo (atención en mesas)
+-- ROLES mozo (atención en mesas)
 IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_mozo')
-BEGIN CREATE ROLE [rol_mozo]; PRINT 'Rol rol_mozo creado'; END
-ELSE PRINT 'Rol rol_mozo ya existe';
+BEGIN CREATE ROLE [rol_mozo]; PRINT 'ROLES rol_mozo creado'; END
+ELSE PRINT 'ROLES rol_mozo ya existe';
 GO
 
 -- =============================================
--- PASO 2: ASIGNAR PERMISOS POR ROL
+-- PASO 2: ASIGNAR PERMISOS POR ROLES
 -- =============================================
 
-PRINT 'Paso 2/3: Configurando permisos por rol...'
+PRINT 'Paso 2/3: Configurando permisos por ROLES...'
 
--- ROL ADMINISTRADOR: acceso completo
+-- ROLES ADMINISTRADOR: acceso completo
 GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::dbo TO [rol_administrador];
 GRANT EXECUTE ON SCHEMA::dbo TO [rol_administrador];
 PRINT 'Permisos rol_administrador configurados';
 
--- ROL EMPLEADO: operaciones básicas (mozo, cocinero)
+-- ROLES EMPLEADOS: operaciones básicas (mozo, cocinero)
 GRANT SELECT ON SCHEMA::dbo TO [rol_empleado];
 GRANT EXECUTE ON dbo.sp_CrearPedido        TO [rol_empleado];
 GRANT EXECUTE ON dbo.sp_AgregarItemPedido  TO [rol_empleado];
 GRANT EXECUTE ON dbo.sp_CalcularTotalPedido TO [rol_empleado];
-GRANT INSERT, UPDATE ON PEDIDO         TO [rol_empleado];
-GRANT INSERT, UPDATE ON DETALLE_PEDIDO TO [rol_empleado];
+GRANT INSERT, UPDATE ON PEDIDOS         TO [rol_empleado];
+GRANT INSERT, UPDATE ON DETALLES_PEDIDOS TO [rol_empleado];
 PRINT 'Permisos rol_empleado configurados';
 
--- ROL CAJERO: operaciones + cierre de caja
+-- ROLES CAJERO: operaciones + cierre de caja
 GRANT SELECT ON SCHEMA::dbo TO [rol_cajero];
 GRANT EXECUTE ON dbo.sp_CrearPedido        TO [rol_cajero];
 GRANT EXECUTE ON dbo.sp_AgregarItemPedido  TO [rol_cajero];
 GRANT EXECUTE ON dbo.sp_CalcularTotalPedido TO [rol_cajero];
 GRANT EXECUTE ON dbo.sp_CerrarPedido       TO [rol_cajero];
-GRANT INSERT, UPDATE ON PEDIDO         TO [rol_cajero];
-GRANT INSERT, UPDATE ON DETALLE_PEDIDO TO [rol_cajero];
+GRANT INSERT, UPDATE ON PEDIDOS         TO [rol_cajero];
+GRANT INSERT, UPDATE ON DETALLES_PEDIDOS TO [rol_cajero];
 PRINT 'Permisos rol_cajero configurados';
 
--- ROL DELIVERY: lectura de pedidos + actualización de estado
-GRANT SELECT ON PEDIDO         TO [rol_delivery];
-GRANT SELECT ON DETALLE_PEDIDO TO [rol_delivery];
-GRANT SELECT ON PLATO          TO [rol_delivery];
-GRANT SELECT ON CLIENTE        TO [rol_delivery];
-GRANT UPDATE ON PEDIDO         TO [rol_delivery];
+-- ROLES DELIVERY: lectura de pedidos + actualización de estado
+GRANT SELECT ON PEDIDOS         TO [rol_delivery];
+GRANT SELECT ON DETALLES_PEDIDOS TO [rol_delivery];
+GRANT SELECT ON PLATOS          TO [rol_delivery];
+GRANT SELECT ON CLIENTES        TO [rol_delivery];
+GRANT UPDATE ON PEDIDOS         TO [rol_delivery];
 PRINT 'Permisos rol_delivery configurados';
 
--- ROL CLIENTE: lectura de menú y sus propios pedidos
-GRANT SELECT ON PEDIDO         TO [rol_cliente];
-GRANT SELECT ON DETALLE_PEDIDO TO [rol_cliente];
-GRANT SELECT ON PLATO          TO [rol_cliente];
-GRANT SELECT ON PRECIO         TO [rol_cliente];
+-- ROLES CLIENTES: lectura de menú y sus propios pedidos
+GRANT SELECT ON PEDIDOS         TO [rol_cliente];
+GRANT SELECT ON DETALLES_PEDIDOS TO [rol_cliente];
+GRANT SELECT ON PLATOS          TO [rol_cliente];
+GRANT SELECT ON PRECIOS         TO [rol_cliente];
 PRINT 'Permisos rol_cliente configurados';
 
--- ROL REPORTES: solo lectura (gerencia, BI)
+-- ROLES REPORTES: solo lectura (gerencia, BI)
 GRANT SELECT ON SCHEMA::dbo TO [rol_reportes];
 PRINT 'Permisos rol_reportes configurados';
 
--- ROL APLICACION WEB: permisos granulares (HM-09)
-GRANT SELECT ON dbo.SUCURSAL       TO [rol_aplicacion_web];
-GRANT SELECT ON dbo.CANAL_VENTA    TO [rol_aplicacion_web];
-GRANT SELECT ON dbo.ESTADO_PEDIDO  TO [rol_aplicacion_web];
-GRANT SELECT ON dbo.ROL            TO [rol_aplicacion_web];
-GRANT SELECT ON dbo.MESA           TO [rol_aplicacion_web];
-GRANT SELECT ON dbo.EMPLEADO       TO [rol_aplicacion_web];
-GRANT SELECT ON dbo.CLIENTE        TO [rol_aplicacion_web];
-GRANT SELECT ON dbo.DOMICILIO      TO [rol_aplicacion_web];
-GRANT SELECT ON dbo.PLATO          TO [rol_aplicacion_web];
-GRANT SELECT ON dbo.PRECIO         TO [rol_aplicacion_web];
-GRANT SELECT, INSERT, UPDATE ON dbo.PEDIDO          TO [rol_aplicacion_web];
-GRANT SELECT, INSERT, UPDATE ON dbo.DETALLE_PEDIDO  TO [rol_aplicacion_web];
-GRANT SELECT, INSERT         ON dbo.CLIENTE         TO [rol_aplicacion_web];
-GRANT SELECT, INSERT         ON dbo.DOMICILIO       TO [rol_aplicacion_web];
-GRANT SELECT ON dbo.NOTIFICACIONES    TO [rol_aplicacion_web];
-GRANT SELECT ON dbo.STOCK_SIMULADO    TO [rol_aplicacion_web];
-GRANT SELECT ON dbo.REPORTES_GENERADOS TO [rol_aplicacion_web];
+-- ROLES APLICACION WEB: permisos granulares (HM-09)
+GRANT SELECT ON dbo.SUCURSALES       TO [rol_aplicacion_web];
+GRANT SELECT ON dbo.CANALES_VENTAS    TO [rol_aplicacion_web];
+GRANT SELECT ON dbo.ESTADOS_PEDIDOS  TO [rol_aplicacion_web];
+GRANT SELECT ON dbo.ROLES            TO [rol_aplicacion_web];
+GRANT SELECT ON dbo.MESAS           TO [rol_aplicacion_web];
+GRANT SELECT ON dbo.EMPLEADOS       TO [rol_aplicacion_web];
+GRANT SELECT ON dbo.CLIENTES        TO [rol_aplicacion_web];
+GRANT SELECT ON dbo.DOMICILIOS      TO [rol_aplicacion_web];
+GRANT SELECT ON dbo.PLATOS          TO [rol_aplicacion_web];
+GRANT SELECT ON dbo.PRECIOS         TO [rol_aplicacion_web];
+GRANT SELECT, INSERT, UPDATE ON dbo.PEDIDOS          TO [rol_aplicacion_web];
+GRANT SELECT, INSERT, UPDATE ON dbo.DETALLES_PEDIDOS  TO [rol_aplicacion_web];
+GRANT SELECT, INSERT         ON dbo.CLIENTES         TO [rol_aplicacion_web];
+GRANT SELECT, INSERT         ON dbo.DOMICILIOS       TO [rol_aplicacion_web];
 GRANT EXECUTE ON SCHEMA::dbo TO [rol_aplicacion_web];
--- Denegar escritura en tablas de auditoría
-DENY INSERT, UPDATE, DELETE ON dbo.AUDITORIA_SIMPLE TO [rol_aplicacion_web];
+-- NOTA: Los permisos sobre NOTIFICACIONES, STOCKS_SIMULADOS, REPORTES_GENERADOS
+--       y AUDITORIAS_SIMPLES se aplican al final de sus bundles respectivos
+--       (Bundle_E1, Bundle_E2, Bundle_R1) donde esas tablas son creadas.
 PRINT 'Permisos rol_aplicacion_web configurados (granular, HM-09)';
 
--- ROL COCINERO: consulta de pedidos + marcar estado (HM-10)
-GRANT SELECT ON dbo.PEDIDO          TO [rol_cocinero];
-GRANT SELECT ON dbo.DETALLE_PEDIDO  TO [rol_cocinero];
-GRANT SELECT ON dbo.PLATO           TO [rol_cocinero];
-GRANT SELECT ON dbo.ESTADO_PEDIDO   TO [rol_cocinero];
-GRANT SELECT ON dbo.STOCK_SIMULADO  TO [rol_cocinero];
-GRANT SELECT ON dbo.NOTIFICACIONES  TO [rol_cocinero];
+-- ROLES COCINERO: consulta de pedidos + marcar estado (HM-10)
+GRANT SELECT ON dbo.PEDIDOS          TO [rol_cocinero];
+GRANT SELECT ON dbo.DETALLES_PEDIDOS  TO [rol_cocinero];
+GRANT SELECT ON dbo.PLATOS           TO [rol_cocinero];
+GRANT SELECT ON dbo.ESTADOS_PEDIDOS   TO [rol_cocinero];
 GRANT EXECUTE ON dbo.sp_ActualizarEstadoPedido   TO [rol_cocinero];
-GRANT EXECUTE ON dbo.sp_ConsultarNotificaciones  TO [rol_cocinero];
-GRANT EXECUTE ON dbo.sp_MarcarNotificacionLeida  TO [rol_cocinero];
-GRANT EXECUTE ON dbo.sp_ConsultarStock           TO [rol_cocinero];
+-- NOTA: Los permisos sobre STOCKS_SIMULADOS, NOTIFICACIONES y sus SPs
+--       se aplican al final de Bundle_E2 donde esas tablas/SPs son creados.
 PRINT 'Permisos rol_cocinero configurados';
 
--- ROL MOZO: toma de pedidos, consulta mesas, actualización de estados
-GRANT SELECT ON dbo.PEDIDO          TO [rol_mozo];
-GRANT SELECT ON dbo.DETALLE_PEDIDO  TO [rol_mozo];
-GRANT SELECT ON dbo.PLATO           TO [rol_mozo];
-GRANT SELECT ON dbo.PRECIO          TO [rol_mozo];
-GRANT SELECT ON dbo.MESA            TO [rol_mozo];
-GRANT SELECT ON dbo.CLIENTE         TO [rol_mozo];
-GRANT SELECT ON dbo.ESTADO_PEDIDO   TO [rol_mozo];
-GRANT SELECT ON dbo.CANAL_VENTA     TO [rol_mozo];
-GRANT INSERT, UPDATE ON dbo.PEDIDO         TO [rol_mozo];
-GRANT INSERT, UPDATE ON dbo.DETALLE_PEDIDO TO [rol_mozo];
+-- ROLES MOZO: toma de pedidos, consulta mesas, actualización de estados
+GRANT SELECT ON dbo.PEDIDOS          TO [rol_mozo];
+GRANT SELECT ON dbo.DETALLES_PEDIDOS  TO [rol_mozo];
+GRANT SELECT ON dbo.PLATOS           TO [rol_mozo];
+GRANT SELECT ON dbo.PRECIOS          TO [rol_mozo];
+GRANT SELECT ON dbo.MESAS            TO [rol_mozo];
+GRANT SELECT ON dbo.CLIENTES         TO [rol_mozo];
+GRANT SELECT ON dbo.ESTADOS_PEDIDOS   TO [rol_mozo];
+GRANT SELECT ON dbo.CANALES_VENTAS     TO [rol_mozo];
+GRANT INSERT, UPDATE ON dbo.PEDIDOS         TO [rol_mozo];
+GRANT INSERT, UPDATE ON dbo.DETALLES_PEDIDOS TO [rol_mozo];
 GRANT EXECUTE ON dbo.sp_CrearPedido             TO [rol_mozo];
 GRANT EXECUTE ON dbo.sp_AgregarItemPedido       TO [rol_mozo];
 GRANT EXECUTE ON dbo.sp_CalcularTotalPedido     TO [rol_mozo];
@@ -247,7 +247,7 @@ BEGIN
 
     PRINT 'ROLES DE BASE DE DATOS:'
     SELECT
-        name        AS [Rol],
+        name        AS [ROLES],
         create_date AS [Fecha Creacion],
         type_desc   AS [Tipo]
     FROM sys.database_principals
@@ -259,7 +259,7 @@ BEGIN
     PRINT 'USUARIOS DE APLICACION:'
     SELECT
         u.name        AS [Usuario],
-        r.name        AS [Rol Asignado],
+        r.name        AS [ROLES Asignado],
         u.create_date AS [Fecha Creacion]
     FROM sys.database_principals u
     INNER JOIN sys.database_role_members rm ON u.principal_id        = rm.member_principal_id
@@ -302,3 +302,4 @@ PRINT ''
 PRINT 'SIGUIENTE PASO: Ejecutar Bundle_D_Consultas_Basicas.sql'
 PRINT '================================================='
 GO
+

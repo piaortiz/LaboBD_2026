@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- SCRIPT DE VALIDACIÓN POST-BUNDLES - ESBIRROSDB
 -- Verifica que todos los componentes estén instalados
 -- correctamente después de ejecutar todos los bundles.
@@ -29,11 +29,11 @@ PRINT '=============================================='
 -- Tablas esperadas (12 tablas de A1)
 DECLARE @TablasEsperadas TABLE (tabla VARCHAR(50))
 INSERT INTO @TablasEsperadas VALUES
-('SUCURSAL'),('CANAL_VENTA'),('ESTADO_PEDIDO'),('ROL'),
-('MESA'),('EMPLEADO'),
-('CLIENTE'),('DOMICILIO'),
-('PLATO'),('PRECIO'),
-('PEDIDO'),('DETALLE_PEDIDO')
+('SUCURSALES'),('CANALES_VENTAS'),('ESTADOS_PEDIDOS'),('ROLES'),
+('MESAS'),('EMPLEADOS'),
+('CLIENTES'),('DOMICILIOS'),
+('PLATOS'),('PRECIOS'),
+('PEDIDOS'),('DETALLES_PEDIDOS')
 
 DECLARE @TablasEncontradas INT
 SELECT @TablasEncontradas = COUNT(*)
@@ -69,9 +69,9 @@ ELSE
 
 -- Verificar datos de referencia
 DECLARE @EstadosPedido INT, @CanalesVenta INT, @Roles INT
-SELECT @EstadosPedido = COUNT(*) FROM ESTADO_PEDIDO
-SELECT @CanalesVenta  = COUNT(*) FROM CANAL_VENTA
-SELECT @Roles         = COUNT(*) FROM ROL
+SELECT @EstadosPedido = COUNT(*) FROM ESTADOS_PEDIDOS
+SELECT @CanalesVenta  = COUNT(*) FROM CANALES_VENTAS
+SELECT @Roles         = COUNT(*) FROM ROLES
 
 SET @TotalComponentes += 1
 IF @EstadosPedido >= 3 AND @CanalesVenta >= 3 AND @Roles >= 3
@@ -89,8 +89,8 @@ END
 
 -- Verificar platos del menú (bodegón)
 DECLARE @Platos INT, @Precios INT
-SELECT @Platos  = COUNT(*) FROM PLATO
-SELECT @Precios = COUNT(*) FROM PRECIO
+SELECT @Platos  = COUNT(*) FROM PLATOS
+SELECT @Precios = COUNT(*) FROM PRECIOS
 
 SET @TotalComponentes += 1
 IF @Platos >= 10 AND @Precios >= 10
@@ -169,16 +169,22 @@ FROM sys.database_principals
 WHERE type = 'R' AND name LIKE 'rol_%'
 
 SET @TotalComponentes += 1
-IF @RolesSeguridad >= 5
+IF @RolesSeguridad >= 9
 BEGIN
-    PRINT 'ROLES SEGURIDAD: ' + CAST(@RolesSeguridad AS VARCHAR) + ' roles - OK'
+    PRINT 'ROLES SEGURIDAD: ' + CAST(@RolesSeguridad AS VARCHAR) + '/9 roles - OK'
     SET @ComponentesOK += 1
 END
 ELSE
 BEGIN
-    PRINT 'ROLES SEGURIDAD: ' + CAST(@RolesSeguridad AS VARCHAR) + ' roles - ERROR (esperados 8)'
+    PRINT 'ROLES SEGURIDAD: ' + CAST(@RolesSeguridad AS VARCHAR) + '/9 roles - ERROR (esperados 9)'
     SET @ComponentesError += 1
 END
+
+-- Verificar función de seguridad
+SET @TotalComponentes += 1
+IF OBJECT_ID('fn_ValidarPermisoUsuario', 'FN') IS NOT NULL
+BEGIN PRINT 'fn_ValidarPermisoUsuario: OK'; SET @ComponentesOK += 1 END
+ELSE BEGIN PRINT 'fn_ValidarPermisoUsuario: ERROR'; SET @ComponentesError += 1 END
 
 DECLARE @UsuariosApp INT
 SELECT @UsuariosApp = COUNT(*) FROM sys.database_principals WHERE name LIKE 'app_esbirros%'
@@ -228,10 +234,15 @@ INNER JOIN @TriggersEsperados te ON t.name = te.trigger_name
 WHERE t.is_disabled = 0
 
 SET @TotalComponentes += 1
-IF @TriggersEncontrados >= 3
+IF @TriggersEncontrados = 5
 BEGIN
     PRINT 'TRIGGERS: ' + CAST(@TriggersEncontrados AS VARCHAR) + '/5 - OK'
     SET @ComponentesOK += 1
+END
+ELSE IF @TriggersEncontrados >= 3
+BEGIN
+    PRINT 'TRIGGERS: ' + CAST(@TriggersEncontrados AS VARCHAR) + '/5 - PARCIAL (Bundle_E2 puede estar incompleto)'
+    SET @ComponentesError += 1
 END
 ELSE
 BEGIN
@@ -240,8 +251,8 @@ BEGIN
 END
 
 DECLARE @TablasControl INT = 0
-IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'AUDITORIA_SIMPLE')  SET @TablasControl += 1
-IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'STOCK_SIMULADO')    SET @TablasControl += 1
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'AUDITORIAS_SIMPLES')  SET @TablasControl += 1
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'STOCKS_SIMULADOS')    SET @TablasControl += 1
 IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'NOTIFICACIONES')    SET @TablasControl += 1
 
 SET @TotalComponentes += 1
@@ -253,6 +264,24 @@ END
 ELSE
 BEGIN
     PRINT 'TABLAS CONTROL: ' + CAST(@TablasControl AS VARCHAR) + '/3 - ERROR'
+    SET @ComponentesError += 1
+END
+
+-- Verificar SPs de Bundle_E2
+DECLARE @SPsE2 INT = 0
+IF OBJECT_ID('sp_ConsultarNotificaciones', 'P') IS NOT NULL SET @SPsE2 += 1
+IF OBJECT_ID('sp_MarcarNotificacionLeida',  'P') IS NOT NULL SET @SPsE2 += 1
+IF OBJECT_ID('sp_ConsultarStock',           'P') IS NOT NULL SET @SPsE2 += 1
+
+SET @TotalComponentes += 1
+IF @SPsE2 = 3
+BEGIN
+    PRINT 'SPs BUNDLE E2: 3/3 (Notificaciones + Stock) - OK'
+    SET @ComponentesOK += 1
+END
+ELSE
+BEGIN
+    PRINT 'SPs BUNDLE E2: ' + CAST(@SPsE2 AS VARCHAR) + '/3 - ERROR'
     SET @ComponentesError += 1
 END
 
@@ -391,3 +420,4 @@ PRINT 'Negocio         : Bodegon Los Esbirros de Claudio'
 PRINT 'Sistema         : EsbirrosDB v2.0'
 PRINT '======================================================='
 GO
+

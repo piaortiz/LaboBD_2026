@@ -1,8 +1,8 @@
--- =============================================
+﻿-- =============================================
 -- BUNDLE B2 - ITEMS Y CÁLCULOS
 -- EsbirrosDB - Sistema de Gestión de Bodegón Porteño
 -- Negocio: Bodegón Los Esbirros de Claudio
--- Descripción: SPs para manejo de ítems de pedido y cálculo de totales
+-- Descripción: SPs para manejo de ítems de PEDIDOS y cálculo de totales
 -- Proyecto Educativo ISTEA - Uso académico exclusivo
 -- PROHIBIDA LA COMERCIALIZACIÓN
 -- =============================================
@@ -21,10 +21,10 @@ PRINT 'Sistema: EsbirrosDB - Bodegon Los Esbirros de Claudio'
 PRINT ''
 
 -- =============================================
--- SP 1: AGREGAR ITEM AL PEDIDO
+-- SP 1: AGREGAR ITEM AL PEDIDOS
 -- =============================================
 -- Sin combos: plato_id es siempre obligatorio.
--- El precio se obtiene de la tabla PRECIO con vigencia actual.
+-- El PRECIOS se obtiene de la tabla PRECIOS con vigencia actual.
 -- =============================================
 
 PRINT 'Creando SP: sp_AgregarItemPedido...'
@@ -50,18 +50,18 @@ BEGIN
         DECLARE @precio_unitario DECIMAL(10,2) = 0
         DECLARE @subtotal        DECIMAL(10,2) = 0
         DECLARE @pedido_existe   INT           = 0
-        DECLARE @estado_pedido   NVARCHAR(50)
+        DECLARE @estado_actual   NVARCHAR(50)
 
         -- Inicializar salidas
         SET @detalle_id = 0
         SET @mensaje    = ''
 
-        -- ── 1. VALIDAR PEDIDO ────────────────────────────
+        -- ── 1. VALIDAR PEDIDOS ────────────────────────────
         SELECT
             @pedido_existe  = COUNT(*),
-            @estado_pedido  = MAX(ep.nombre)
-        FROM PEDIDO p
-        INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+            @estado_actual  = MAX(ep.nombre)
+        FROM PEDIDOS p
+        INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
         WHERE p.pedido_id = @pedido_id
 
         IF @pedido_existe = 0
@@ -71,14 +71,14 @@ BEGIN
             RETURN -1
         END
 
-        IF @estado_pedido NOT IN ('Pendiente', 'Confirmado')
+        IF @estado_actual NOT IN ('Pendiente', 'Confirmado')
         BEGIN
-            SET @mensaje = 'Error: No se pueden agregar ítems en estado "' + @estado_pedido + '"'
+            SET @mensaje = 'Error: No se pueden agregar ítems en estado "' + @estado_actual + '"'
             ROLLBACK TRANSACTION
             RETURN -2
         END
 
-        -- ── 2. VALIDAR PLATO ─────────────────────────────
+        -- ── 2. VALIDAR PLATOS ─────────────────────────────
         IF @plato_id IS NULL
         BEGIN
             SET @mensaje = 'Error: plato_id es obligatorio'
@@ -86,9 +86,9 @@ BEGIN
             RETURN -3
         END
 
-        IF NOT EXISTS (SELECT 1 FROM PLATO WHERE plato_id = @plato_id AND activo = 1)
+        IF NOT EXISTS (SELECT 1 FROM PLATOS WHERE plato_id = @plato_id AND activo = 1)
         BEGIN
-            SET @mensaje = 'Error: Plato no encontrado o inactivo (plato_id=' + CAST(@plato_id AS VARCHAR) + ')'
+            SET @mensaje = 'Error: PLATOS no encontrado o inactivo (plato_id=' + CAST(@plato_id AS VARCHAR) + ')'
             ROLLBACK TRANSACTION
             RETURN -4
         END
@@ -102,10 +102,10 @@ BEGIN
         END
 
         -- ── 4. OBTENER PRECIO VIGENTE DEL PLATO ─────────
-        -- Toma el precio más reciente dentro de la vigencia actual
+        -- Toma el monto más reciente dentro de la vigencia actual
         -- HA-04: precio_id DESC como tiebreaker ante vigencias duplicadas
-        SELECT TOP 1 @precio_unitario = precio
-        FROM PRECIO
+        SELECT TOP 1 @precio_unitario = monto
+        FROM PRECIOS
         WHERE plato_id       = @plato_id
           AND vigencia_desde <= CAST(GETDATE() AS DATE)
           AND (vigencia_hasta IS NULL OR vigencia_hasta >= CAST(GETDATE() AS DATE))
@@ -122,7 +122,7 @@ BEGIN
         SET @subtotal = @precio_unitario * @cantidad
 
         -- ── 6. INSERTAR DETALLE ──────────────────────────
-        INSERT INTO DETALLE_PEDIDO (
+        INSERT INTO DETALLES_PEDIDOS (
             pedido_id,
             plato_id,
             cantidad,
@@ -154,10 +154,9 @@ END
 GO
 
 -- =============================================
--- SP 2: CALCULAR TOTAL DEL PEDIDO
+-- SP 2: CALCULAR TOTAL DEL PEDIDOS
 -- =============================================
--- Recalcula el total sumando todos los subtotales de DETALLE_PEDIDO.
--- Recalcula el total sumando todos los subtotales de DETALLE_PEDIDO.
+-- Recalcula el total sumando todos los subtotales de DETALLES_PEDIDOS.
 -- =============================================
 
 PRINT 'Creando SP: sp_CalcularTotalPedido...'
@@ -183,25 +182,25 @@ BEGIN
         SET @nuevo_total = 0
         SET @mensaje     = ''
 
-        -- 1. VALIDAR PEDIDO
+        -- 1. VALIDAR PEDIDOS
         SELECT @pedido_existe = COUNT(*)
-        FROM PEDIDO
+        FROM PEDIDOS
         WHERE pedido_id = @pedido_id
 
         IF @pedido_existe = 0
         BEGIN
-            SET @mensaje = 'Error: El pedido no existe (pedido_id=' + CAST(@pedido_id AS VARCHAR) + ')'
+            SET @mensaje = 'Error: El PEDIDOS no existe (pedido_id=' + CAST(@pedido_id AS VARCHAR) + ')'
             ROLLBACK TRANSACTION
             RETURN -1
         END
 
         -- 2. CALCULAR TOTAL
         SELECT @total_calculado = ISNULL(SUM(subtotal), 0)
-        FROM DETALLE_PEDIDO
+        FROM DETALLES_PEDIDOS
         WHERE pedido_id = @pedido_id
 
-        -- 3. ACTUALIZAR PEDIDO
-        UPDATE PEDIDO
+        -- 3. ACTUALIZAR PEDIDOS
+        UPDATE PEDIDOS
         SET total = @total_calculado
         WHERE pedido_id = @pedido_id
 
@@ -238,8 +237,8 @@ PRINT ''
 PRINT 'BUNDLE B2 COMPLETADO!'
 PRINT '================================================='
 PRINT 'Funciones disponibles:'
-PRINT '   sp_AgregarItemPedido   - Agrega plato a pedido (sin combo)'
-PRINT '   sp_CalcularTotalPedido - Recalcula total del pedido'
+PRINT '   sp_AgregarItemPedido   - Agrega PLATOS a PEDIDOS (sin combo)'
+PRINT '   sp_CalcularTotalPedido - Recalcula total del PEDIDOS'
 PRINT ''
 PRINT 'Ejemplo de uso:'
 PRINT '   DECLARE @did INT, @msg NVARCHAR(500)'

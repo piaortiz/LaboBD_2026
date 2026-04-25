@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- BUNDLE B1 - PEDIDOS CORE
 -- EsbirrosDB - Sistema de Gestión de Bodegón Porteño
 -- Negocio: Bodegón Los Esbirros de Claudio
@@ -21,7 +21,7 @@ PRINT 'Sistema: EsbirrosDB - Bodegon Los Esbirros de Claudio'
 PRINT ''
 
 -- =============================================
--- SP: CREAR PEDIDO
+-- SP: CREAR PEDIDOS
 -- =============================================
 
 PRINT 'Creando SP: sp_CrearPedido...'
@@ -57,7 +57,7 @@ BEGIN
         SET @mensaje   = ''
 
         -- 1. VALIDAR CANAL DE VENTA
-        IF NOT EXISTS (SELECT 1 FROM CANAL_VENTA WHERE canal_id = @canal_id)
+        IF NOT EXISTS (SELECT 1 FROM CANALES_VENTAS WHERE canal_id = @canal_id)
         BEGIN
             SET @mensaje = 'Error: Canal de venta no válido'
             ROLLBACK TRANSACTION
@@ -66,7 +66,7 @@ BEGIN
 
         -- 2. OBTENER ESTADO "PENDIENTE"
         SELECT @estado_pendiente_id = estado_id
-        FROM ESTADO_PEDIDO
+        FROM ESTADOS_PEDIDOS
         WHERE nombre = 'Pendiente'
 
         IF @estado_pendiente_id IS NULL
@@ -76,45 +76,45 @@ BEGIN
             RETURN -2
         END
 
-        -- 3. VALIDAR EMPLEADO
+        -- 3. VALIDAR EMPLEADOS
         SELECT
             @empleado_activo   = COUNT(*),
             @sucursal_empleado = MAX(sucursal_id)
-        FROM EMPLEADO
+        FROM EMPLEADOS
         WHERE empleado_id = @tomado_por_empleado_id
           AND activo = 1
 
         IF @empleado_activo = 0
         BEGIN
-            SET @mensaje = 'Error: Empleado no existe o está inactivo'
+            SET @mensaje = 'Error: EMPLEADOS no existe o está inactivo'
             ROLLBACK TRANSACTION
             RETURN -3
         END
 
-        -- 4. VALIDACIONES POR CANAL (mesa / delivery)
+        -- 4. VALIDACIONES POR CANAL (MESAS / delivery)
         IF @mesa_id IS NOT NULL
         BEGIN
-            -- Verificar que la mesa exista y esté activa
-            IF NOT EXISTS (SELECT 1 FROM MESA WHERE mesa_id = @mesa_id AND activa = 1)
+            -- Verificar que la MESAS exista y esté activa
+            IF NOT EXISTS (SELECT 1 FROM MESAS WHERE mesa_id = @mesa_id AND activa = 1)
             BEGIN
-                SET @mensaje = 'Error: Mesa no existe o está inactiva'
+                SET @mensaje = 'Error: MESAS no existe o está inactiva'
                 ROLLBACK TRANSACTION
                 RETURN -4
             END
 
-            -- Verificar que empleado y mesa pertenezcan a la misma sucursal
-            SELECT @sucursal_mesa = sucursal_id FROM MESA WHERE mesa_id = @mesa_id
+            -- Verificar que EMPLEADOS y MESAS pertenezcan a la misma SUCURSALES
+            SELECT @sucursal_mesa = sucursal_id FROM MESAS WHERE mesa_id = @mesa_id
 
             IF @sucursal_empleado != @sucursal_mesa
             BEGIN
-                SET @mensaje = 'Error: El empleado no pertenece a la sucursal de la mesa'
+                SET @mensaje = 'Error: El EMPLEADOS no pertenece a la SUCURSALES de la MESAS'
                 ROLLBACK TRANSACTION
                 RETURN -5
             END
         END
 
-        -- 5. CREAR EL PEDIDO
-        INSERT INTO PEDIDO (
+        -- 5. CREAR EL PEDIDOS
+        INSERT INTO PEDIDOS (
             fecha_pedido,
             canal_id,
             estado_id,
@@ -136,7 +136,7 @@ BEGIN
         )
 
         SET @pedido_id = SCOPE_IDENTITY()
-        SET @mensaje   = 'Pedido creado exitosamente. pedido_id=' + CAST(@pedido_id AS VARCHAR)
+        SET @mensaje   = 'PEDIDOS creado exitosamente. pedido_id=' + CAST(@pedido_id AS VARCHAR)
 
         COMMIT TRANSACTION
         RETURN 0

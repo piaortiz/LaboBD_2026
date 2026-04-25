@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- BUNDLE E2 - CONTROL AVANZADO
 -- EsbirrosDB - Sistema de Gestión de Bodegón Porteño
 -- Negocio: Bodegón Los Esbirros de Claudio
@@ -26,22 +26,22 @@ PRINT ''
 
 PRINT 'Creando Trigger: tr_ValidarStock...'
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'STOCK_SIMULADO')
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'STOCKS_SIMULADOS')
 BEGIN
-    CREATE TABLE STOCK_SIMULADO (
+    CREATE TABLE STOCKS_SIMULADOS (
         plato_id             INT      PRIMARY KEY,
         stock_disponible     INT      NOT NULL DEFAULT 100,
         stock_minimo         INT      NOT NULL DEFAULT 10,
         ultima_actualizacion DATETIME NOT NULL DEFAULT GETDATE(),
-        CONSTRAINT FK_STOCK_plato FOREIGN KEY (plato_id) REFERENCES PLATO(plato_id),
+        CONSTRAINT FK_STOCK_plato FOREIGN KEY (plato_id) REFERENCES PLATOS(plato_id),
         CONSTRAINT CK_STOCK_no_negativo CHECK (stock_disponible >= 0)
     )
 
     -- Stock inicial para todos los platos
-    INSERT INTO STOCK_SIMULADO (plato_id, stock_disponible, stock_minimo)
-    SELECT plato_id, 100, 10 FROM PLATO
+    INSERT INTO STOCKS_SIMULADOS (plato_id, stock_disponible, stock_minimo)
+    SELECT plato_id, 100, 10 FROM PLATOS
 
-    PRINT 'Tabla STOCK_SIMULADO creada con stock inicial (100 unidades por plato)'
+    PRINT 'Tabla STOCKS_SIMULADOS creada con stock inicial (100 unidades por PLATOS)'
 END
 
 IF EXISTS (SELECT * FROM sys.triggers WHERE object_id = OBJECT_ID(N'[dbo].[tr_ValidarStock]'))
@@ -49,7 +49,7 @@ IF EXISTS (SELECT * FROM sys.triggers WHERE object_id = OBJECT_ID(N'[dbo].[tr_Va
 GO
 
 CREATE TRIGGER [dbo].[tr_ValidarStock]
-ON [dbo].[DETALLE_PEDIDO]
+ON [dbo].[DETALLES_PEDIDOS]
 AFTER INSERT
 AS
 BEGIN
@@ -64,8 +64,8 @@ BEGIN
         p.nombre,
         s.stock_disponible
     FROM inserted i
-    INNER JOIN PLATO         p ON i.plato_id = p.plato_id
-    INNER JOIN STOCK_SIMULADO s ON i.plato_id = s.plato_id
+    INNER JOIN PLATOS         p ON i.plato_id = p.plato_id
+    INNER JOIN STOCKS_SIMULADOS s ON i.plato_id = s.plato_id
     WHERE s.stock_disponible < i.cantidad
 
     IF EXISTS (SELECT 1 FROM @platos_sin_stock)
@@ -75,7 +75,7 @@ BEGIN
         SELECT
             'STOCK_BAJO',
             'Stock insuficiente: ' + ps.nombre,
-            'Plato "' + ps.nombre + '" tiene stock=' + CAST(ps.stock_actual AS VARCHAR)
+            'PLATOS "' + ps.nombre + '" tiene stock=' + CAST(ps.stock_actual AS VARCHAR)
                 + ' pero se pidieron ' + CAST(i.cantidad AS VARCHAR) + ' unidades',
             i.pedido_id,
             'CRITICA',
@@ -89,7 +89,7 @@ BEGIN
     SET
         stock_disponible     = s.stock_disponible - i.cantidad,
         ultima_actualizacion = GETDATE()
-    FROM STOCK_SIMULADO s
+    FROM STOCKS_SIMULADOS s
     INNER JOIN inserted i ON s.plato_id = i.plato_id
 END
 GO
@@ -123,20 +123,20 @@ IF EXISTS (SELECT * FROM sys.triggers WHERE object_id = OBJECT_ID(N'[dbo].[tr_Si
 GO
 
 CREATE TRIGGER [dbo].[tr_SistemaNotificaciones]
-ON [dbo].[PEDIDO]
+ON [dbo].[PEDIDOS]
 AFTER UPDATE
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- HM-08: Notificación: pedido en preparación (mozos → cocina)
+    -- HM-08: Notificación: PEDIDOS en preparación (mozos → cocina)
     INSERT INTO NOTIFICACIONES (tipo, titulo, mensaje, pedido_id, mesa_id, prioridad, usuario_destino)
     SELECT
         'PEDIDO_EN_PREPARACION',
-        'Nuevo Pedido para Preparar',
+        'Nuevo PEDIDOS para Preparar',
         CONCAT(
-            'El pedido #', i.pedido_id,
-            CASE WHEN m.numero IS NOT NULL THEN ' de la mesa ' + CAST(m.numero AS VARCHAR) ELSE ' (delivery)' END,
+            'El PEDIDOS #', i.pedido_id,
+            CASE WHEN m.numero IS NOT NULL THEN ' de la MESAS ' + CAST(m.numero AS VARCHAR) ELSE ' (delivery)' END,
             ' ingresó a preparación. Total: $', i.total
         ),
         i.pedido_id,
@@ -145,19 +145,19 @@ BEGIN
         'COCINA'
     FROM inserted i
     INNER JOIN deleted d                ON i.pedido_id  = d.pedido_id
-    INNER JOIN ESTADO_PEDIDO ep_new     ON i.estado_id  = ep_new.estado_id
-    INNER JOIN ESTADO_PEDIDO ep_old     ON d.estado_id  = ep_old.estado_id
-    LEFT JOIN  MESA          m          ON i.mesa_id    = m.mesa_id
-    WHERE ep_new.nombre = 'En Preparacion' AND ep_old.nombre != 'En Preparacion'
+    INNER JOIN ESTADOS_PEDIDOS ep_new     ON i.estado_id  = ep_new.estado_id
+    INNER JOIN ESTADOS_PEDIDOS ep_old     ON d.estado_id  = ep_old.estado_id
+    LEFT JOIN  MESAS          m          ON i.mesa_id    = m.mesa_id
+    WHERE ep_new.nombre = 'En Preparación' AND ep_old.nombre != 'En Preparación'
 
-    -- Notificación: pedido listo para entregar (cocina → mozos)
+    -- Notificación: PEDIDOS listo para entregar (cocina → mozos)
     INSERT INTO NOTIFICACIONES (tipo, titulo, mensaje, pedido_id, mesa_id, prioridad, usuario_destino)
     SELECT
         'PEDIDO_LISTO',
-        'Pedido Listo para Entregar',
+        'PEDIDOS Listo para Entregar',
         CONCAT(
-            'El pedido #', i.pedido_id,
-            CASE WHEN m.numero IS NOT NULL THEN ' de la mesa ' + CAST(m.numero AS VARCHAR) ELSE '' END,
+            'El PEDIDOS #', i.pedido_id,
+            CASE WHEN m.numero IS NOT NULL THEN ' de la MESAS ' + CAST(m.numero AS VARCHAR) ELSE '' END,
             ' está listo. Total: $', i.total
         ),
         i.pedido_id,
@@ -166,72 +166,72 @@ BEGIN
         'MOZOS'
     FROM inserted i
     INNER JOIN deleted d                ON i.pedido_id  = d.pedido_id
-    INNER JOIN ESTADO_PEDIDO ep_new     ON i.estado_id  = ep_new.estado_id
-    INNER JOIN ESTADO_PEDIDO ep_old     ON d.estado_id  = ep_old.estado_id
-    LEFT JOIN  MESA          m          ON i.mesa_id    = m.mesa_id
+    INNER JOIN ESTADOS_PEDIDOS ep_new     ON i.estado_id  = ep_new.estado_id
+    INNER JOIN ESTADOS_PEDIDOS ep_old     ON d.estado_id  = ep_old.estado_id
+    LEFT JOIN  MESAS          m          ON i.mesa_id    = m.mesa_id
     WHERE ep_new.nombre = 'Listo' AND ep_old.nombre != 'Listo'
 
-    -- HM-08: Notificación: pedido en reparto (cocina → repartidor)
+    -- HM-08: Notificación: PEDIDOS en reparto (cocina → repartidor)
     INSERT INTO NOTIFICACIONES (tipo, titulo, mensaje, pedido_id, mesa_id, prioridad, usuario_destino)
     SELECT
         'PEDIDO_EN_REPARTO',
-        'Pedido en Camino',
-        CONCAT('Pedido #', i.pedido_id, ' salió a reparto. Total: $', i.total),
+        'PEDIDOS en Camino',
+        CONCAT('PEDIDOS #', i.pedido_id, ' salió a reparto. Total: $', i.total),
         i.pedido_id,
         i.mesa_id,
         'ALTA',
         'DELIVERY'
     FROM inserted i
     INNER JOIN deleted d                ON i.pedido_id  = d.pedido_id
-    INNER JOIN ESTADO_PEDIDO ep_new     ON i.estado_id  = ep_new.estado_id
-    INNER JOIN ESTADO_PEDIDO ep_old     ON d.estado_id  = ep_old.estado_id
+    INNER JOIN ESTADOS_PEDIDOS ep_new     ON i.estado_id  = ep_new.estado_id
+    INNER JOIN ESTADOS_PEDIDOS ep_old     ON d.estado_id  = ep_old.estado_id
     WHERE ep_new.nombre = 'En Reparto' AND ep_old.nombre != 'En Reparto'
 
-    -- Notificación: pedido cerrado (mozos → caja)
+    -- Notificación: PEDIDOS cerrado (mozos → caja)
     INSERT INTO NOTIFICACIONES (tipo, titulo, mensaje, pedido_id, mesa_id, prioridad, usuario_destino)
     SELECT
         'PEDIDO_CERRADO',
-        'Pedido Completado',
-        CONCAT('Pedido #', i.pedido_id, ' cerrado exitosamente. Total: $', i.total),
+        'PEDIDOS Completado',
+        CONCAT('PEDIDOS #', i.pedido_id, ' cerrado exitosamente. Total: $', i.total),
         i.pedido_id,
         i.mesa_id,
         'NORMAL',
         'CAJA'
     FROM inserted i
     INNER JOIN deleted d            ON i.pedido_id = d.pedido_id
-    INNER JOIN ESTADO_PEDIDO ep_new ON i.estado_id = ep_new.estado_id
-    INNER JOIN ESTADO_PEDIDO ep_old ON d.estado_id = ep_old.estado_id
+    INNER JOIN ESTADOS_PEDIDOS ep_new ON i.estado_id = ep_new.estado_id
+    INNER JOIN ESTADOS_PEDIDOS ep_old ON d.estado_id = ep_old.estado_id
     WHERE ep_new.nombre = 'Cerrado' AND ep_old.nombre != 'Cerrado'
 
-    -- HM-08: Notificación: pedido cancelado (→ caja + cocina)
+    -- HM-08: Notificación: PEDIDOS cancelado (→ caja + cocina)
     INSERT INTO NOTIFICACIONES (tipo, titulo, mensaje, pedido_id, mesa_id, prioridad, usuario_destino)
     SELECT
         'PEDIDO_CANCELADO',
-        'Pedido Cancelado',
-        CONCAT('Pedido #', i.pedido_id, ' fue CANCELADO. Motivo: ', ISNULL(i.observaciones, 'Sin motivo')),
+        'PEDIDOS Cancelado',
+        CONCAT('PEDIDOS #', i.pedido_id, ' fue CANCELADO. Motivo: ', ISNULL(i.observaciones, 'Sin motivo')),
         i.pedido_id,
         i.mesa_id,
         'CRITICA',
         'CAJA'
     FROM inserted i
     INNER JOIN deleted d            ON i.pedido_id = d.pedido_id
-    INNER JOIN ESTADO_PEDIDO ep_new ON i.estado_id = ep_new.estado_id
-    INNER JOIN ESTADO_PEDIDO ep_old ON d.estado_id = ep_old.estado_id
+    INNER JOIN ESTADOS_PEDIDOS ep_new ON i.estado_id = ep_new.estado_id
+    INNER JOIN ESTADOS_PEDIDOS ep_old ON d.estado_id = ep_old.estado_id
     WHERE ep_new.nombre = 'Cancelado' AND ep_old.nombre != 'Cancelado'
 
     INSERT INTO NOTIFICACIONES (tipo, titulo, mensaje, pedido_id, mesa_id, prioridad, usuario_destino)
     SELECT
         'PEDIDO_CANCELADO',
-        'Pedido Cancelado',
-        CONCAT('Pedido #', i.pedido_id, ' fue CANCELADO. Dejar de preparar.'),
+        'PEDIDOS Cancelado',
+        CONCAT('PEDIDOS #', i.pedido_id, ' fue CANCELADO. Dejar de preparar.'),
         i.pedido_id,
         i.mesa_id,
         'CRITICA',
         'COCINA'
     FROM inserted i
     INNER JOIN deleted d            ON i.pedido_id = d.pedido_id
-    INNER JOIN ESTADO_PEDIDO ep_new ON i.estado_id = ep_new.estado_id
-    INNER JOIN ESTADO_PEDIDO ep_old ON d.estado_id = ep_old.estado_id
+    INNER JOIN ESTADOS_PEDIDOS ep_new ON i.estado_id = ep_new.estado_id
+    INNER JOIN ESTADOS_PEDIDOS ep_old ON d.estado_id = ep_old.estado_id
     WHERE ep_new.nombre = 'Cancelado' AND ep_old.nombre != 'Cancelado'
 END
 GO
@@ -281,9 +281,9 @@ BEGIN
         END AS prioridad_orden
 
     FROM NOTIFICACIONES n
-    LEFT JOIN PEDIDO        p  ON n.pedido_id = p.pedido_id
-    LEFT JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
-    LEFT JOIN MESA          m  ON n.mesa_id   = m.mesa_id
+    LEFT JOIN PEDIDOS        p  ON n.pedido_id = p.pedido_id
+    LEFT JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
+    LEFT JOIN MESAS          m  ON n.mesa_id   = m.mesa_id
     WHERE (@usuario_destino IS NULL OR n.usuario_destino = @usuario_destino)
       AND (@solo_no_leidas  = 0     OR n.leida = 0)
       AND (@prioridad       IS NULL OR n.prioridad       = @prioridad)
@@ -350,15 +350,15 @@ BEGIN
             WHEN s.stock_disponible <= s.stock_minimo * 2 THEN 'BAJO'
             ELSE 'NORMAL'
         END AS estado_stock,
-        pr.precio AS precio_actual
-    FROM PLATO p
-    INNER JOIN STOCK_SIMULADO s ON p.plato_id = s.plato_id
+        pr.monto AS precio_actual
+    FROM PLATOS p
+    INNER JOIN STOCKS_SIMULADOS s ON p.plato_id = s.plato_id
     LEFT JOIN (
         SELECT
             plato_id,
-            precio,
+            monto,
             ROW_NUMBER() OVER (PARTITION BY plato_id ORDER BY vigencia_desde DESC) AS rn
-        FROM PRECIO
+        FROM PRECIOS
         WHERE vigencia_desde <= GETDATE()
           AND (vigencia_hasta IS NULL OR vigencia_hasta >= GETDATE())
     ) pr ON p.plato_id = pr.plato_id AND pr.rn = 1
@@ -400,9 +400,9 @@ IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[sp_Con
     PRINT 'sp_ConsultarStock            : Creado correctamente'
 ELSE PRINT 'sp_ConsultarStock            : ERROR'
 
-IF EXISTS (SELECT * FROM sys.tables WHERE name = 'STOCK_SIMULADO')
-    PRINT 'STOCK_SIMULADO               : OK'
-ELSE PRINT 'STOCK_SIMULADO               : ERROR'
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'STOCKS_SIMULADOS')
+    PRINT 'STOCKS_SIMULADOS               : OK'
+ELSE PRINT 'STOCKS_SIMULADOS               : ERROR'
 
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'NOTIFICACIONES')
     PRINT 'NOTIFICACIONES               : OK'
@@ -423,4 +423,26 @@ PRINT '   sp_ConsultarStock          - Consulta de inventario'
 PRINT ''
 PRINT 'SIGUIENTE PASO: Ejecutar Bundle_R1_Reportes_Estructuras_SPs.sql'
 PRINT '================================================='
+GO
+
+-- =============================================
+-- PERMISOS DIFERIDOS: NOTIFICACIONES, STOCKS_SIMULADOS y SPs E2
+-- (requiere que Bundle_C_Seguridad se haya ejecutado antes)
+-- =============================================
+IF EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_aplicacion_web')
+BEGIN
+    GRANT SELECT ON dbo.NOTIFICACIONES    TO [rol_aplicacion_web];
+    GRANT SELECT ON dbo.STOCKS_SIMULADOS  TO [rol_aplicacion_web];
+    PRINT 'Permisos sobre NOTIFICACIONES y STOCKS_SIMULADOS aplicados a rol_aplicacion_web'
+END
+
+IF EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_cocinero')
+BEGIN
+    GRANT SELECT ON dbo.STOCKS_SIMULADOS                     TO [rol_cocinero];
+    GRANT SELECT ON dbo.NOTIFICACIONES                       TO [rol_cocinero];
+    GRANT EXECUTE ON dbo.sp_ConsultarNotificaciones          TO [rol_cocinero];
+    GRANT EXECUTE ON dbo.sp_MarcarNotificacionLeida          TO [rol_cocinero];
+    GRANT EXECUTE ON dbo.sp_ConsultarStock                   TO [rol_cocinero];
+    PRINT 'Permisos diferidos de E2 aplicados a rol_cocinero'
+END
 GO

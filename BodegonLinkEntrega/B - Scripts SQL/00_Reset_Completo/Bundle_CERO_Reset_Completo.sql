@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- BUNDLE CERO - RESET COMPLETO ESBIRROSDB
 -- Sistema de Reset Total de Base de Datos
 -- Negocio: Bodegón Los Esbirros de Claudio

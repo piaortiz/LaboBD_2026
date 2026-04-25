@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- BUNDLE A1 - BASE DE DATOS Y ESTRUCTURA
 -- EsbirrosDB - Sistema de Gestión de Bodegón Porteño
 -- Negocio: Bodegón Los Esbirros de Claudio
@@ -47,7 +47,7 @@ PRINT 'Paso 2/2: Creando estructura de tablas...'
 -- MÓDULO 1: CATÁLOGOS BASE
 -- ─────────────────────────────────────────────
 
-CREATE TABLE SUCURSAL (
+CREATE TABLE SUCURSALES (
     sucursal_id INT           IDENTITY(1,1) PRIMARY KEY,
     nombre      NVARCHAR(100) NOT NULL,
     direccion   NVARCHAR(255) NOT NULL,
@@ -55,14 +55,14 @@ CREATE TABLE SUCURSAL (
 )
 GO
 
-CREATE TABLE CANAL_VENTA (
+CREATE TABLE CANALES_VENTAS (
     canal_id INT          IDENTITY(1,1) PRIMARY KEY,
     nombre   NVARCHAR(50) NOT NULL,
     CONSTRAINT UK_CANAL_VENTA_nombre UNIQUE (nombre)
 )
 GO
 
-CREATE TABLE ESTADO_PEDIDO (
+CREATE TABLE ESTADOS_PEDIDOS (
     estado_id INT          IDENTITY(1,1) PRIMARY KEY,
     nombre    NVARCHAR(50) NOT NULL,
     orden     INT          NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE ESTADO_PEDIDO (
 )
 GO
 
-CREATE TABLE ROL (
+CREATE TABLE ROLES (
     rol_id      INT           IDENTITY(1,1) PRIMARY KEY,
     nombre      NVARCHAR(50)  NOT NULL,
     descripcion NVARCHAR(255) NULL,
@@ -83,20 +83,20 @@ GO
 -- MÓDULO 2: PERSONAL Y UBICACIÓN
 -- ─────────────────────────────────────────────
 
-CREATE TABLE MESA (
+CREATE TABLE MESAS (
     mesa_id     INT           IDENTITY(1,1) PRIMARY KEY,
     numero      INT           NOT NULL,
     capacidad   INT           NOT NULL CHECK (capacidad > 0),
     sucursal_id INT           NOT NULL,
     qr_token    NVARCHAR(255) NOT NULL,
     activa      BIT           NOT NULL DEFAULT 1,
-    CONSTRAINT FK_MESA_sucursal        FOREIGN KEY (sucursal_id) REFERENCES SUCURSAL(sucursal_id),
+    CONSTRAINT FK_MESA_sucursal        FOREIGN KEY (sucursal_id) REFERENCES SUCURSALES(sucursal_id),
     CONSTRAINT UK_MESA_numero_sucursal UNIQUE (numero, sucursal_id),
     CONSTRAINT UK_MESA_qr_token        UNIQUE (qr_token)
 )
 GO
 
-CREATE TABLE EMPLEADO (
+CREATE TABLE EMPLEADOS (
     empleado_id   INT           IDENTITY(1,1) PRIMARY KEY,
     nombre        NVARCHAR(100) NOT NULL,
     usuario       NVARCHAR(50)  NOT NULL,
@@ -104,8 +104,8 @@ CREATE TABLE EMPLEADO (
     rol_id        INT           NOT NULL,
     sucursal_id   INT           NOT NULL,
     activo        BIT           NOT NULL DEFAULT 1,
-    CONSTRAINT FK_EMPLEADO_rol      FOREIGN KEY (rol_id)      REFERENCES ROL(rol_id),
-    CONSTRAINT FK_EMPLEADO_sucursal FOREIGN KEY (sucursal_id) REFERENCES SUCURSAL(sucursal_id),
+    CONSTRAINT FK_EMPLEADO_rol      FOREIGN KEY (rol_id)      REFERENCES ROLES(rol_id),
+    CONSTRAINT FK_EMPLEADO_sucursal FOREIGN KEY (sucursal_id) REFERENCES SUCURSALES(sucursal_id),
     CONSTRAINT UK_EMPLEADO_usuario  UNIQUE (usuario)
 )
 GO
@@ -114,19 +114,19 @@ GO
 -- MÓDULO 3: CLIENTES Y DOMICILIOS
 -- ─────────────────────────────────────────────
 
-CREATE TABLE CLIENTE (
+CREATE TABLE CLIENTES (
     cliente_id INT           IDENTITY(1,1) PRIMARY KEY,
     nombre     NVARCHAR(100) NOT NULL,
     telefono   NVARCHAR(20)  NULL,
     email      NVARCHAR(100) NULL,
     doc_tipo   NVARCHAR(10)  NULL,
-    doc_nro    NVARCHAR(20)  NULL,
-    CONSTRAINT UK_CLIENTE_email     UNIQUE (email),
-    CONSTRAINT UK_CLIENTE_documento UNIQUE (doc_tipo, doc_nro)
+    doc_nro    NVARCHAR(20)  NULL
+    -- Unicidad de email y documento se garantiza mediante índices filtrados en Bundle_A2
+    -- (UNIQUE constraint no admite múltiples NULLs correctamente en SQL Server)
 )
 GO
 
-CREATE TABLE DOMICILIO (
+CREATE TABLE DOMICILIOS (
     domicilio_id  INT           IDENTITY(1,1) PRIMARY KEY,
     cliente_id    INT           NOT NULL,
     calle         NVARCHAR(100) NOT NULL,
@@ -137,19 +137,21 @@ CREATE TABLE DOMICILIO (
     provincia     NVARCHAR(50)  NOT NULL,
     observaciones NVARCHAR(255) NULL,
     es_principal  BIT           NOT NULL DEFAULT 0,
-    CONSTRAINT FK_DOMICILIO_cliente FOREIGN KEY (cliente_id) REFERENCES CLIENTE(cliente_id)
+    tipo_domicilio NVARCHAR(50) NULL DEFAULT 'Particular',
+    CONSTRAINT FK_DOMICILIO_cliente FOREIGN KEY (cliente_id) REFERENCES CLIENTES(cliente_id),
+    CONSTRAINT CK_DOMICILIO_tipo CHECK (tipo_domicilio IN ('Particular', 'Laboral', 'Temporal', 'Otro'))
 )
 GO
 
 -- ─────────────────────────────────────────────
 -- MÓDULO 4: PRODUCTOS Y PRECIOS
--- Nota: tabla PLATO se conserva para compatibilidad.
+-- Nota: tabla PLATOS se conserva para compatibilidad.
 -- En el bodegón representa cualquier ítem del menú
 -- (entradas, pastas, carnes a la leña, postres, bebidas).
 -- COMBO y PROMOCION fueron eliminados de este módulo.
 -- ─────────────────────────────────────────────
 
-CREATE TABLE PLATO (
+CREATE TABLE PLATOS (
     plato_id  INT           IDENTITY(1,1) PRIMARY KEY,
     nombre    NVARCHAR(100) NOT NULL,
     categoria NVARCHAR(50)  NOT NULL,
@@ -158,27 +160,27 @@ CREATE TABLE PLATO (
 )
 GO
 
-CREATE TABLE PRECIO (
+CREATE TABLE PRECIOS (
     precio_id      INT           IDENTITY(1,1) PRIMARY KEY,
     plato_id       INT           NOT NULL,
     vigencia_desde DATE          NOT NULL,
     vigencia_hasta DATE          NULL,
-    precio         DECIMAL(10,2) NOT NULL CHECK (precio >= 0),
-    CONSTRAINT FK_PRECIO_plato    FOREIGN KEY (plato_id) REFERENCES PLATO(plato_id),
+    monto          DECIMAL(10,2) NOT NULL CHECK (monto >= 0),
+    CONSTRAINT FK_PRECIO_plato    FOREIGN KEY (plato_id) REFERENCES PLATOS(plato_id),
     CONSTRAINT CK_PRECIO_vigencia CHECK (vigencia_hasta IS NULL OR vigencia_hasta >= vigencia_desde)
 )
 GO
 
 -- ─────────────────────────────────────────────
 -- MÓDULO 5: PEDIDOS
--- DETALLE_PEDIDO simplificado:
+-- DETALLES_PEDIDOS simplificado:
 --   · plato_id NOT NULL (siempre obligatorio)
 --   · Sin combo_id (tabla COMBO eliminada)
 --   · Sin promocion_id (tabla PROMOCION eliminada)
 --   · Sin constraint XOR (ya no aplica)
 -- ─────────────────────────────────────────────
 
-CREATE TABLE PEDIDO (
+CREATE TABLE PEDIDOS (
     pedido_id                 INT           IDENTITY(1,1) PRIMARY KEY,
     fecha_pedido              DATETIME      NOT NULL DEFAULT GETDATE(),
     fecha_entrega             DATETIME      NULL,
@@ -192,25 +194,25 @@ CREATE TABLE PEDIDO (
     entregado_por_empleado_id INT           NULL,
     total                     DECIMAL(10,2) NOT NULL DEFAULT 0,
     observaciones             NVARCHAR(500) NULL,
-    CONSTRAINT FK_PEDIDO_canal         FOREIGN KEY (canal_id)                  REFERENCES CANAL_VENTA(canal_id),
-    CONSTRAINT FK_PEDIDO_mesa          FOREIGN KEY (mesa_id)                   REFERENCES MESA(mesa_id),
-    CONSTRAINT FK_PEDIDO_cliente       FOREIGN KEY (cliente_id)                REFERENCES CLIENTE(cliente_id),
-    CONSTRAINT FK_PEDIDO_domicilio     FOREIGN KEY (domicilio_id)              REFERENCES DOMICILIO(domicilio_id),
-    CONSTRAINT FK_PEDIDO_estado        FOREIGN KEY (estado_id)                 REFERENCES ESTADO_PEDIDO(estado_id),
-    CONSTRAINT FK_PEDIDO_tomado_por    FOREIGN KEY (tomado_por_empleado_id)    REFERENCES EMPLEADO(empleado_id),
-    CONSTRAINT FK_PEDIDO_entregado_por FOREIGN KEY (entregado_por_empleado_id) REFERENCES EMPLEADO(empleado_id)
+    CONSTRAINT FK_PEDIDO_canal         FOREIGN KEY (canal_id)                  REFERENCES CANALES_VENTAS(canal_id),
+    CONSTRAINT FK_PEDIDO_mesa          FOREIGN KEY (mesa_id)                   REFERENCES MESAS(mesa_id),
+    CONSTRAINT FK_PEDIDO_cliente       FOREIGN KEY (cliente_id)                REFERENCES CLIENTES(cliente_id),
+    CONSTRAINT FK_PEDIDO_domicilio     FOREIGN KEY (domicilio_id)              REFERENCES DOMICILIOS(domicilio_id),
+    CONSTRAINT FK_PEDIDO_estado        FOREIGN KEY (estado_id)                 REFERENCES ESTADOS_PEDIDOS(estado_id),
+    CONSTRAINT FK_PEDIDO_tomado_por    FOREIGN KEY (tomado_por_empleado_id)    REFERENCES EMPLEADOS(empleado_id),
+    CONSTRAINT FK_PEDIDO_entregado_por FOREIGN KEY (entregado_por_empleado_id) REFERENCES EMPLEADOS(empleado_id)
 )
 GO
 
-CREATE TABLE DETALLE_PEDIDO (
+CREATE TABLE DETALLES_PEDIDOS (
     detalle_id      INT           IDENTITY(1,1) PRIMARY KEY,
     pedido_id       INT           NOT NULL,
     plato_id        INT           NOT NULL,
     cantidad        INT           NOT NULL CHECK (cantidad > 0),
     precio_unitario DECIMAL(10,2) NOT NULL CHECK (precio_unitario >= 0),
     subtotal        DECIMAL(10,2) NOT NULL CHECK (subtotal >= 0),
-    CONSTRAINT FK_DETALLE_PEDIDO_pedido FOREIGN KEY (pedido_id) REFERENCES PEDIDO(pedido_id),
-    CONSTRAINT FK_DETALLE_PEDIDO_plato  FOREIGN KEY (plato_id)  REFERENCES PLATO(plato_id)
+    CONSTRAINT FK_DETALLE_PEDIDO_pedido FOREIGN KEY (pedido_id) REFERENCES PEDIDOS(pedido_id),
+    CONSTRAINT FK_DETALLE_PEDIDO_plato  FOREIGN KEY (plato_id)  REFERENCES PLATOS(plato_id)
 )
 GO
 
@@ -218,7 +220,7 @@ GO
 -- MÓDULO 6: AUDITORÍA
 -- ─────────────────────────────────────────────
 -- NOTA: La tabla AUDITORIA fue eliminada (v2.0).
--- La auditoría del sistema se maneja con AUDITORIA_SIMPLE,
+-- La auditoría del sistema se maneja con AUDITORIAS_SIMPLES,
 -- creada automáticamente por tr_AuditoriaPedidos en Bundle E1.
 -- ─────────────────────────────────────────────
 

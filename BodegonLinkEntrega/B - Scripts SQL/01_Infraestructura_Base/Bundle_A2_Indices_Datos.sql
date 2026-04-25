@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- BUNDLE A2 - ÍNDICES Y DATOS INICIALES
 -- EsbirrosDB - Sistema de Gestión de Bodegón Porteño
 -- Negocio: Bodegón Los Esbirros de Claudio
@@ -33,47 +33,71 @@ PRINT 'Paso 1/2: Creando indices...'
 
 -- Consultas por fecha y estado (reporte de ventas diario)
 CREATE NONCLUSTERED INDEX IX_PEDIDO_fecha_estado
-    ON PEDIDO(fecha_pedido, estado_id)
+    ON PEDIDOS(fecha_pedido, estado_id)
 GO
 
--- Lookup de pedidos por mesa (frecuente en servicio de salón)
+-- Lookup de pedidos por MESAS (frecuente en servicio de salón)
 CREATE NONCLUSTERED INDEX IX_PEDIDO_mesa
-    ON PEDIDO(mesa_id)
+    ON PEDIDOS(mesa_id)
     WHERE mesa_id IS NOT NULL
 GO
 
--- Lookup de pedidos por cliente (historial, delivery)
+-- Lookup de pedidos por CLIENTES (historial, delivery)
 CREATE NONCLUSTERED INDEX IX_PEDIDO_cliente
-    ON PEDIDO(cliente_id)
+    ON PEDIDOS(cliente_id)
     WHERE cliente_id IS NOT NULL
 GO
 
--- JOIN principal: detalle → pedido
+-- JOIN principal: detalle → PEDIDOS
 CREATE NONCLUSTERED INDEX IX_DETALLE_PEDIDO_pedido
-    ON DETALLE_PEDIDO(pedido_id)
+    ON DETALLES_PEDIDOS(pedido_id)
 GO
 
--- JOIN: detalle → plato (ranking de productos populares)
+-- JOIN: detalle → PLATOS (ranking de productos populares)
 CREATE NONCLUSTERED INDEX IX_DETALLE_PEDIDO_plato
-    ON DETALLE_PEDIDO(plato_id)
+    ON DETALLES_PEDIDOS(plato_id)
 GO
 
--- Mesas activas por sucursal
+-- Mesas activas por SUCURSALES
 CREATE NONCLUSTERED INDEX IX_MESA_sucursal_activa
-    ON MESA(sucursal_id, activa)
+    ON MESAS(sucursal_id, activa)
 GO
 
--- Empleados activos por sucursal
+-- Empleados activos por SUCURSALES
 CREATE NONCLUSTERED INDEX IX_EMPLEADO_sucursal_activo
-    ON EMPLEADO(sucursal_id, activo)
+    ON EMPLEADOS(sucursal_id, activo)
 GO
 
--- Precio vigente por plato (composite: evita table scan en sp_AgregarItemPedido)
+-- PRECIOS vigente por PLATOS (composite: evita table scan en sp_AgregarItemPedido)
 CREATE NONCLUSTERED INDEX IX_PRECIO_plato_vigencia
-    ON PRECIO(plato_id, vigencia_desde, vigencia_hasta)
+    ON PRECIOS(plato_id, vigencia_desde, vigencia_hasta)
 GO
 
-PRINT 'Indices creados: 8 non-clustered indexes'
+-- ─────────────────────────────────────────────
+-- ÍNDICES FILTRADOS: UNICIDAD CON COLUMNAS NULLABLE
+-- Los UNIQUE constraint no admiten múltiples NULLs en SQL Server.
+-- Los índices filtrados garantizan unicidad solo sobre valores no-nulos.
+-- ─────────────────────────────────────────────
+
+-- Email único por cliente (solo cuando tiene email registrado)
+CREATE UNIQUE NONCLUSTERED INDEX UIX_CLIENTE_email
+    ON CLIENTES(email)
+    WHERE email IS NOT NULL
+GO
+
+-- Documento único por cliente (solo cuando tiene doc_tipo y doc_nro)
+CREATE UNIQUE NONCLUSTERED INDEX UIX_CLIENTE_documento
+    ON CLIENTES(doc_tipo, doc_nro)
+    WHERE doc_tipo IS NOT NULL AND doc_nro IS NOT NULL
+GO
+
+-- Un único domicilio principal por cliente (es_principal = 1)
+CREATE UNIQUE NONCLUSTERED INDEX UIX_DOMICILIO_principal
+    ON DOMICILIOS(cliente_id)
+    WHERE es_principal = 1
+GO
+
+PRINT 'Indices creados: 11 non-clustered indexes (8 operativos + 3 filtrados de unicidad)'
 
 -- =============================================
 -- PASO 2: DATOS INICIALES
@@ -81,23 +105,23 @@ PRINT 'Indices creados: 8 non-clustered indexes'
 
 PRINT 'Paso 2/2: Insertando datos iniciales...'
 
--- ─── SUCURSAL ────────────────────────────────
-INSERT INTO SUCURSAL (nombre, direccion) VALUES
+-- ─── SUCURSALES ────────────────────────────────
+INSERT INTO SUCURSALES (nombre, direccion) VALUES
 ('Los Esbirros de Claudio - San Telmo', 'Defensa 742, San Telmo, CABA')
 GO
 
 -- ─── CANALES DE VENTA ────────────────────────
-INSERT INTO CANAL_VENTA (nombre) VALUES
+INSERT INTO CANALES_VENTAS (nombre) VALUES
 ('Mostrador'),
 ('Delivery'),
-('Mesa QR'),
+('MESAS QR'),
 ('Telefono')
 GO
 
--- ─── ESTADOS DE PEDIDO ───────────────────────
+-- ─── ESTADOS DE PEDIDOS ───────────────────────
 -- Flujo: Pendiente → Confirmado → En Preparación → Listo → En Reparto → Entregado → Cerrado
 -- Cancelado tiene orden 99 (puede ocurrir en cualquier punto)
-INSERT INTO ESTADO_PEDIDO (nombre, orden) VALUES
+INSERT INTO ESTADOS_PEDIDOS (nombre, orden) VALUES
 ('Pendiente',       1),
 ('Confirmado',      2),
 ('En Preparación',  3),
@@ -109,7 +133,7 @@ INSERT INTO ESTADO_PEDIDO (nombre, orden) VALUES
 GO
 
 -- ─── ROLES ───────────────────────────────────
-INSERT INTO ROL (nombre, descripcion) VALUES
+INSERT INTO ROLES (nombre, descripcion) VALUES
 ('Administrador', 'Acceso total al sistema'),
 ('Gerente',       'Gestión operativa y reportes'),
 ('Mozo',          'Toma de pedidos y atención de mesas'),
@@ -119,10 +143,10 @@ INSERT INTO ROL (nombre, descripcion) VALUES
 ('Hostess',       'Recepción y asignación de mesas')
 GO
 
--- ─── MESAS (Sucursal San Telmo) ──────────────
-DECLARE @suc_santelmo INT = (SELECT sucursal_id FROM SUCURSAL WHERE nombre LIKE '%San Telmo%')
+-- ─── MESAS (SUCURSALES San Telmo) ──────────────
+DECLARE @suc_santelmo INT = (SELECT sucursal_id FROM SUCURSALES WHERE nombre LIKE '%San Telmo%')
 
-INSERT INTO MESA (numero, capacidad, sucursal_id, qr_token) VALUES
+INSERT INTO MESAS (numero, capacidad, sucursal_id, qr_token) VALUES
 -- San Telmo (salón principal, mesas de madera típicas de bodegón)
 (1, 2,  @suc_santelmo, 'QR_ST_001_' + CONVERT(VARCHAR(36), NEWID())),
 (2, 2,  @suc_santelmo, 'QR_ST_002_' + CONVERT(VARCHAR(36), NEWID())),
@@ -134,40 +158,40 @@ INSERT INTO MESA (numero, capacidad, sucursal_id, qr_token) VALUES
 (8, 10, @suc_santelmo, 'QR_ST_008_' + CONVERT(VARCHAR(36), NEWID()))
 GO
 
--- ─── EMPLEADO ADMINISTRADOR ──────────────────
-DECLARE @rol_admin    INT = (SELECT rol_id      FROM ROL      WHERE nombre = 'Administrador')
-DECLARE @suc_santelmo INT = (SELECT sucursal_id FROM SUCURSAL WHERE nombre LIKE '%San Telmo%')
+-- ─── EMPLEADOS ADMINISTRADOR ──────────────────
+DECLARE @rol_admin    INT = (SELECT rol_id      FROM ROLES      WHERE nombre = 'Administrador')
+DECLARE @suc_santelmo INT = (SELECT sucursal_id FROM SUCURSALES WHERE nombre LIKE '%San Telmo%')
 
-INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+INSERT INTO EMPLEADOS (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
 ('Claudio Administrador', 'claudio.admin',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'password_temporal_2026'), 2),
  @rol_admin, @suc_santelmo)
 GO
 
--- ─── PLANTEL DE EMPLEADOS POR ROL ────────────────────
+-- ─── PLANTEL DE EMPLEADOS POR ROLES ────────────────────
 -- Distribución basada en horarios del bodegón:
 -- Lunes a Sábado: 12:00-16:00 (almuerzo) y 20:00-00:00 (cena)
 -- Domingo: 12:00-17:00 (solo almuerzo)
 -- Capacidad: 8 mesas (2-10 comensales) = aprox. 50 personas simultáneas
-PRINT 'Generando plantel de empleados por rol...'
+PRINT 'Generando plantel de empleados por ROLES...'
 
-DECLARE @rol_gerente     INT = (SELECT rol_id FROM ROL WHERE nombre = 'Gerente')
-DECLARE @rol_mozo        INT = (SELECT rol_id FROM ROL WHERE nombre = 'Mozo')
-DECLARE @rol_cajero      INT = (SELECT rol_id FROM ROL WHERE nombre = 'Cajero')
-DECLARE @rol_cocinero    INT = (SELECT rol_id FROM ROL WHERE nombre = 'Cocinero')
-DECLARE @rol_repartidor  INT = (SELECT rol_id FROM ROL WHERE nombre = 'Repartidor')
-DECLARE @rol_hostess     INT = (SELECT rol_id FROM ROL WHERE nombre = 'Hostess')
-DECLARE @suc_st          INT = (SELECT sucursal_id FROM SUCURSAL WHERE nombre LIKE '%San Telmo%')
+DECLARE @rol_gerente     INT = (SELECT rol_id FROM ROLES WHERE nombre = 'Gerente')
+DECLARE @rol_mozo        INT = (SELECT rol_id FROM ROLES WHERE nombre = 'Mozo')
+DECLARE @rol_cajero      INT = (SELECT rol_id FROM ROLES WHERE nombre = 'Cajero')
+DECLARE @rol_cocinero    INT = (SELECT rol_id FROM ROLES WHERE nombre = 'Cocinero')
+DECLARE @rol_repartidor  INT = (SELECT rol_id FROM ROLES WHERE nombre = 'Repartidor')
+DECLARE @rol_hostess     INT = (SELECT rol_id FROM ROLES WHERE nombre = 'Hostess')
+DECLARE @suc_st          INT = (SELECT sucursal_id FROM SUCURSALES WHERE nombre LIKE '%San Telmo%')
 
 -- GERENCIA (1 persona - horario completo)
-INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+INSERT INTO EMPLEADOS (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
 ('Maria Fernandez', 'maria.fernandez',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'gerente2026'), 2),
  @rol_gerente, @suc_st)
 
 -- MOZOS (6 personas - 3 turno almuerzo, 3 turno cena)
 -- Turno almuerzo (12:00-16:00)
-INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+INSERT INTO EMPLEADOS (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
 ('Carlos Ramirez', 'carlos.ramirez',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'mozo2026'), 2),
  @rol_mozo, @suc_st),
@@ -179,7 +203,7 @@ INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUE
  @rol_mozo, @suc_st)
 
 -- Turno cena (20:00-00:00)
-INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+INSERT INTO EMPLEADOS (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
 ('Ana Torres', 'ana.torres',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'mozo2026'), 2),
  @rol_mozo, @suc_st),
@@ -191,7 +215,7 @@ INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUE
  @rol_mozo, @suc_st)
 
 -- CAJEROS (2 personas - 1 por turno)
-INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+INSERT INTO EMPLEADOS (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
 ('Roberto Sanchez', 'roberto.sanchez',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'cajero2026'), 2),
  @rol_cajero, @suc_st),
@@ -201,7 +225,7 @@ INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUE
 
 -- COCINEROS (4 personas - 2 por turno, parrilla a la leña requiere experiencia)
 -- Turno almuerzo
-INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+INSERT INTO EMPLEADOS (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
 ('Eduardo "Tito" Gonzalez', 'eduardo.gonzalez',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'cocina2026'), 2),
  @rol_cocinero, @suc_st),
@@ -210,7 +234,7 @@ INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUE
  @rol_cocinero, @suc_st)
 
 -- Turno cena
-INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+INSERT INTO EMPLEADOS (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
 ('Hernan Castro', 'hernan.castro',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'cocina2026'), 2),
  @rol_cocinero, @suc_st),
@@ -219,7 +243,7 @@ INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUE
  @rol_cocinero, @suc_st)
 
 -- REPARTIDORES (3 personas - solo turno cena, delivery nocturno)
-INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+INSERT INTO EMPLEADOS (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
 ('Matias Pereyra', 'matias.pereyra',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'delivery2026'), 2),
  @rol_repartidor, @suc_st),
@@ -231,7 +255,7 @@ INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUE
  @rol_repartidor, @suc_st)
 
 -- HOSTESS (2 personas - 1 por turno, recepción y asignación de mesas)
-INSERT INTO EMPLEADO (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
+INSERT INTO EMPLEADOS (nombre, usuario, hash_password, rol_id, sucursal_id) VALUES
 ('Gabriela Paz', 'gabriela.paz',
  CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'hostess2026'), 2),
  @rol_hostess, @suc_st),
@@ -244,7 +268,7 @@ GO
 
 -- ─── MENÚ BODEGÓN PORTEÑO ────────────────────
 -- Categorías: Entradas, Pastas, Carnes a la Leña, Guarniciones, Postres, Bebidas
-INSERT INTO PLATO (nombre, categoria) VALUES
+INSERT INTO PLATOS (nombre, categoria) VALUES
 -- Entradas
 ('Empanadas de Carne (x6)',         'Entradas'),
 ('Provoleta a la Parrilla',         'Entradas'),
@@ -276,7 +300,7 @@ INSERT INTO PLATO (nombre, categoria) VALUES
 GO
 
 -- ─── PRECIOS VIGENTES ────────────────────────
-INSERT INTO PRECIO (plato_id, vigencia_desde, precio)
+INSERT INTO PRECIOS (plato_id, vigencia_desde, monto)
 SELECT
     plato_id,
     CAST(GETDATE() AS DATE),
@@ -318,7 +342,7 @@ SELECT
             END
         ELSE 1000.00
     END
-FROM PLATO
+FROM PLATOS
 GO
 
 -- =============================================
@@ -328,17 +352,17 @@ GO
 PRINT ''
 PRINT 'Validando instalacion...'
 
-DECLARE @sucursales INT = (SELECT COUNT(*) FROM SUCURSAL)
-DECLARE @canales    INT = (SELECT COUNT(*) FROM CANAL_VENTA)
-DECLARE @estados    INT = (SELECT COUNT(*) FROM ESTADO_PEDIDO)
-DECLARE @roles      INT = (SELECT COUNT(*) FROM ROL)
-DECLARE @mesas      INT = (SELECT COUNT(*) FROM MESA)
-DECLARE @platos     INT = (SELECT COUNT(*) FROM PLATO)
-DECLARE @precios    INT = (SELECT COUNT(*) FROM PRECIO)
+DECLARE @sucursales INT = (SELECT COUNT(*) FROM SUCURSALES)
+DECLARE @canales    INT = (SELECT COUNT(*) FROM CANALES_VENTAS)
+DECLARE @estados    INT = (SELECT COUNT(*) FROM ESTADOS_PEDIDOS)
+DECLARE @roles      INT = (SELECT COUNT(*) FROM ROLES)
+DECLARE @mesas      INT = (SELECT COUNT(*) FROM MESAS)
+DECLARE @platos     INT = (SELECT COUNT(*) FROM PLATOS)
+DECLARE @precios    INT = (SELECT COUNT(*) FROM PRECIOS)
 
 PRINT 'Sucursales     : ' + CAST(@sucursales AS VARCHAR)
 PRINT 'Canales venta  : ' + CAST(@canales    AS VARCHAR)
-PRINT 'Estados pedido : ' + CAST(@estados    AS VARCHAR)
+PRINT 'Estados PEDIDOS : ' + CAST(@estados    AS VARCHAR)
 PRINT 'Roles          : ' + CAST(@roles      AS VARCHAR)
 PRINT 'Mesas          : ' + CAST(@mesas      AS VARCHAR)
 PRINT 'Platos (menu)  : ' + CAST(@platos     AS VARCHAR)

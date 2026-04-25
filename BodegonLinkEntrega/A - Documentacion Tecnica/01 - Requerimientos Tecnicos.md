@@ -1,4 +1,4 @@
-# REQUERIMIENTOS TECNICOS - EsbirrosDB
+﻿# REQUERIMIENTOS TECNICOS - EsbirrosDB
 
 ## **INFORMACIÓN DEL DOCUMENTO**
 
@@ -6,7 +6,7 @@
 |-----------|-----------|
 | **Documento** | Requerimientos Tecnicos - Sistema EsbirrosDB |
 | **Proyecto** | Sistema de Gestión de Pedidos — Bodegón Porteño |
-| **Cliente** | Bodegón Los Esbirros de Claudio |
+| **CLIENTES** | Bodegón Los Esbirros de Claudio |
 | **Desarrollado por** | SQLeaders S.A. |
 | **Versión** | 2.0 |
 | **Tipo** | Especificación Técnica Completa |
@@ -120,7 +120,7 @@
 - **Habilitar TCP/IP** en SQL Server Configuration Manager
 - **Abrir puerto 1433** en firewall de Windows / Security Group de AWS
 - **Configurar IP estática** del servidor (recomendado)
-- **Verificar conectividad** desde aplicaciones cliente
+- **Verificar conectividad** desde aplicaciones CLIENTES
 
 ---
 

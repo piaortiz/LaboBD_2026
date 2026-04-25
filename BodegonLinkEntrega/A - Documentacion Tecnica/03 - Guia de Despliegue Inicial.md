@@ -1,4 +1,4 @@
-# GUÍA DE DESPLIEGUE INICIAL - SISTEMA ESBIRROSDB
+﻿# GUÍA DE DESPLIEGUE INICIAL - SISTEMA ESBIRROSDB
 
 ## **INFORMACIÓN DEL DOCUMENTO**
 
@@ -6,7 +6,7 @@
 |-----------|-----------|
 | **Documento** | Guía de Despliegue Inicial - Sistema EsbirrosDB |
 | **Proyecto** | Sistema de Gestión de Pedidos — Bodegón Porteño |
-| **Cliente** | Bodegón Los Esbirros de Claudio |
+| **CLIENTES** | Bodegón Los Esbirros de Claudio |
 | **Desarrollado por** | SQLeaders S.A. |
 | **Versión** | 2.0 |
 | **Estado** | Implementado y Funcional |
@@ -46,7 +46,11 @@ Esta guía proporciona las instrucciones completas para el despliegue inicial de
 - `Bundle_R2_Reportes_Vistas_Dashboard.sql` — Vistas y dashboard ejecutivo
 
 ### **Script de Validación**
-- `06_VALIDACION_POST_BUNDLES.sql` — Verificación final completa
+- `06_VALIDACION_POST_BUNDLES.sql` — Verificación final completa del sistema
+- `TEST_Negocio.sql` — 25 pruebas funcionales end-to-end de lógica de negocio
+
+### **07_Carga_Masiva_Datos** *(Opcional — Testing con volumen)*
+- `Bundle_F_Carga_Masiva.sql` — Genera ~43.000 registros realistas (3.000 clientes, 10.000 pedidos, ~30.000 detalles)
 
 ---
 
@@ -101,10 +105,10 @@ sqlcmd -S [SERVIDOR] -d EsbirrosDB -E -i "Bundle_A2_Indices_Datos.sql"
 
 **Verificación:**
 ```sql
-SELECT COUNT(*) AS 'Estados_Pedido' FROM ESTADO_PEDIDO; -- Esperado: 8
-SELECT COUNT(*) AS 'Roles_Sistema'  FROM ROL;           -- Esperado: 7
-SELECT COUNT(*) AS 'Canales_Venta'  FROM CANAL_VENTA;   -- Esperado: 5
-SELECT COUNT(*) AS 'Platos_Menu'    FROM PLATO;          -- Esperado: 22
+SELECT COUNT(*) AS 'Estados_Pedido' FROM ESTADOS_PEDIDOS; -- Esperado: 8
+SELECT COUNT(*) AS 'Roles_Sistema'  FROM ROLES;           -- Esperado: 7
+SELECT COUNT(*) AS 'Canales_Venta'  FROM CANALES_VENTAS;   -- Esperado: 4
+SELECT COUNT(*) AS 'Platos_Menu'    FROM PLATOS;          -- Esperado: 22
 ```
 
 ---
@@ -184,7 +188,7 @@ WHERE type = 'R' AND name LIKE 'rol_%';
 -- Archivo: 04_Automatizacion_Avanzada/Bundle_E1_Triggers_Principales.sql
 --  Tiempo estimado: 1 minuto
 --  Crea: tr_ActualizarTotales, tr_AuditoriaPedidos, tr_AuditoriaDetalle
---  Tabla: AUDITORIA_SIMPLE
+--  Tabla: AUDITORIAS_SIMPLES
 ```
 
 #### **Paso 4.2 - Control Avanzado**
@@ -192,7 +196,7 @@ WHERE type = 'R' AND name LIKE 'rol_%';
 -- Archivo: 04_Automatizacion_Avanzada/Bundle_E2_Control_Avanzado.sql
 --  Tiempo estimado: 1 minuto
 --  Crea: tr_ValidarStock, tr_SistemaNotificaciones
---  Tablas: STOCK_SIMULADO, NOTIFICACIONES
+--  Tablas: STOCKS_SIMULADOS, NOTIFICACIONES
 --  SPs: sp_ConsultarNotificaciones, sp_MarcarNotificacionLeida, sp_ConsultarStock
 ```
 
@@ -231,11 +235,11 @@ WHERE type = 'R' AND name LIKE 'rol_%';
 ### **Resultados Esperados:**
 - **Tablas principales:** 12/12
 - **Tablas COMBO/PROMOCION:** No deben existir
-- **Índices performance:** >= 8 creados
-- **Datos de referencia:** Estados(8), Canales(5), Roles(7) completos
-- **Stored procedures:** >= 6 funcionales (sp_*Pedido*)
-- **Roles de seguridad:** 8 roles configurados
-- **Triggers:** >= 3 activos
+- **Índices:** 11 creados (8 de performance + 3 UIX filtrados de unicidad)
+- **Datos de referencia:** Estados(8), Canales(4), Roles(7) completos
+- **Stored procedures:** 19 funcionales (sp_*)
+- **Roles de seguridad:** 9 roles configurados
+- **Triggers:** 5 activos
 - **Reportes:** Infraestructura operativa
 - **Porcentaje de éxito:** >= 90%
 
@@ -276,6 +280,12 @@ sqlcmd -S [SERVIDOR] -d EsbirrosDB -E -i "05_Reportes_Dashboard/Bundle_R2_Report
 
 # Validación Final
 sqlcmd -S [SERVIDOR] -d EsbirrosDB -E -i "06_VALIDACION_POST_BUNDLES.sql"
+
+# Pruebas funcionales de negocio (opcional pero recomendado)
+sqlcmd -S [SERVIDOR] -E -i "06_Validacion_Post_Bundles/TEST_Negocio.sql"
+
+# Carga masiva de datos (opcional — para testing con volumen)
+sqlcmd -S [SERVIDOR] -E -i "07_Carga_Masiva_Datos/Bundle_F_Carga_Masiva.sql"
 ```
 
 ### **Script PowerShell Automatizado**

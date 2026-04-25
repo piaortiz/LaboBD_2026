@@ -1,4 +1,4 @@
-# INFRAESTRUCTURA BASE - EsbirrosDB
+﻿# INFRAESTRUCTURA BASE - EsbirrosDB
 
 **Orden de ejecución:** PASO 1  
 **Dependencias:** Ninguna
@@ -12,7 +12,7 @@
   - 12 tablas principales
   - Relaciones y claves foráneas (14 FK en A1, 17 total)
   - Restricciones de integridad (CHECK, UNIQUE, NOT NULL)
-  - DETALLE_PEDIDO con `plato_id NOT NULL`
+  - DETALLES_PEDIDOS con `plato_id NOT NULL`
 
 ### **Bundle_A2_Indices_Datos.sql**
 - **Propósito:** Optimización de performance + datos iniciales + menú del bodegón
@@ -40,10 +40,10 @@ WHERE TABLE_TYPE = 'BASE TABLE'
 -- Esperado: 12 (tablas principales)
 
 -- Verificar datos iniciales
-SELECT COUNT(*) as Platos FROM PLATO        -- Esperado: 22
-SELECT COUNT(*) as Precios FROM PRECIO       -- Esperado: 22
-SELECT COUNT(*) as Roles FROM ROL            -- Esperado: 7
-SELECT COUNT(*) as Sucursales FROM SUCURSAL  -- Esperado: 2
+SELECT COUNT(*) as Platos FROM PLATOS        -- Esperado: 22
+SELECT COUNT(*) as Precios FROM PRECIOS       -- Esperado: 22
+SELECT COUNT(*) as Roles FROM ROLES            -- Esperado: 7
+SELECT COUNT(*) as Sucursales FROM SUCURSALES  -- Esperado: 2
 ```
 
 ## PRERREQUISITOS

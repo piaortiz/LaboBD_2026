@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- BUNDLE D - CONSULTAS BÁSICAS
 -- EsbirrosDB - Sistema de Gestión de Bodegón Porteño
 -- Negocio: Bodegón Los Esbirros de Claudio
@@ -41,7 +41,7 @@ BEGIN
         p.plato_id,
         p.nombre       AS plato_nombre,
         p.categoria,
-        pr.precio      AS precio_actual,
+        pr.monto        AS precio_actual,
         pr.vigencia_desde,
         pr.vigencia_hasta,
         CASE
@@ -50,8 +50,8 @@ BEGIN
             ELSE 'Vencido'
         END            AS estado_precio,
         p.activo
-    FROM PLATO p
-    INNER JOIN PRECIO pr ON p.plato_id = pr.plato_id
+    FROM PLATOS p
+    INNER JOIN PRECIOS pr ON p.plato_id = pr.plato_id
     WHERE p.activo = 1
       AND pr.vigencia_desde <= GETDATE()
       AND (pr.vigencia_hasta IS NULL OR pr.vigencia_hasta >= GETDATE())
@@ -84,8 +84,8 @@ BEGIN
         m.qr_token,
         CASE
             WHEN EXISTS (
-                SELECT 1 FROM PEDIDO p
-                INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+                SELECT 1 FROM PEDIDOS p
+                INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
                 WHERE p.mesa_id = m.mesa_id
                   AND ep.nombre NOT IN ('Cerrado', 'Cancelado')
             ) THEN 'Ocupada'
@@ -93,14 +93,14 @@ BEGIN
         END                      AS estado_mesa,
         (
             SELECT TOP 1 p.pedido_id
-            FROM PEDIDO p
-            INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+            FROM PEDIDOS p
+            INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
             WHERE p.mesa_id = m.mesa_id
               AND ep.nombre NOT IN ('Cerrado', 'Cancelado')
             ORDER BY p.fecha_pedido DESC
         )                        AS pedido_activo_id
-    FROM MESA m
-    INNER JOIN SUCURSAL s ON m.sucursal_id = s.sucursal_id
+    FROM MESAS m
+    INNER JOIN SUCURSALES s ON m.sucursal_id = s.sucursal_id
     WHERE m.activa = 1
       AND (@sucursal_id IS NULL OR m.sucursal_id = @sucursal_id)
     ORDER BY s.nombre, m.numero
@@ -120,7 +120,7 @@ GO
 CREATE VIEW [dbo].[vw_PedidosCompletos]
 AS
 SELECT
-    -- Pedido
+    -- PEDIDOS
     p.pedido_id,
     p.fecha_pedido,
     FORMAT(p.fecha_pedido, 'yyyy-MM-dd')  AS fecha_pedido_formato,
@@ -128,30 +128,30 @@ SELECT
     DATENAME(weekday, p.fecha_pedido)     AS dia_semana,
 
     -- Estado
-    ep.nombre AS estado_pedido,
+    ep.nombre AS estado_nombre,
     ep.orden  AS estado_orden,
 
     -- Canal
-    cv.nombre AS canal_venta,
+    cv.nombre AS canal_nombre,
 
-    -- Cliente
+    -- CLIENTES
     c.cliente_id,
     c.nombre   AS cliente_nombre,
     c.telefono AS cliente_telefono,
     c.email    AS cliente_email,
 
-    -- Mesa
+    -- MESAS
     m.mesa_id,
     m.numero   AS mesa_numero,
     m.capacidad AS mesa_capacidad,
     p.cant_comensales,
 
-    -- Empleado
+    -- EMPLEADOS
     e.empleado_id,
     e.nombre   AS empleado_nombre,
     e.usuario  AS empleado_usuario,
 
-    -- Sucursal
+    -- SUCURSALES
     s.sucursal_id,
     s.nombre   AS sucursal_nombre,
     s.direccion AS sucursal_direccion,
@@ -167,13 +167,13 @@ SELECT
         ELSE DATEDIFF(MINUTE, p.fecha_pedido, GETDATE())
     END        AS minutos_transcurridos
 
-FROM PEDIDO p
-INNER JOIN ESTADO_PEDIDO ep ON p.estado_id              = ep.estado_id
-INNER JOIN CANAL_VENTA   cv ON p.canal_id               = cv.canal_id
-INNER JOIN EMPLEADO      e  ON p.tomado_por_empleado_id = e.empleado_id
-INNER JOIN SUCURSAL      s  ON e.sucursal_id            = s.sucursal_id
-LEFT JOIN  MESA          m  ON p.mesa_id                = m.mesa_id
-LEFT JOIN  CLIENTE       c  ON p.cliente_id             = c.cliente_id
+FROM PEDIDOS p
+INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id              = ep.estado_id
+INNER JOIN CANALES_VENTAS   cv ON p.canal_id               = cv.canal_id
+INNER JOIN EMPLEADOS      e  ON p.tomado_por_empleado_id = e.empleado_id
+INNER JOIN SUCURSALES      s  ON e.sucursal_id            = s.sucursal_id
+LEFT JOIN  MESAS          m  ON p.mesa_id                = m.mesa_id
+LEFT JOIN  CLIENTES       c  ON p.cliente_id             = c.cliente_id
 GO
 
 -- =============================================
@@ -198,8 +198,8 @@ SELECT
 
     CASE
         WHEN EXISTS (
-            SELECT 1 FROM PEDIDO p
-            INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+            SELECT 1 FROM PEDIDOS p
+            INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
             WHERE p.mesa_id = m.mesa_id
               AND ep.nombre NOT IN ('Cerrado', 'Cancelado')
         ) THEN 'Ocupada'
@@ -228,8 +228,8 @@ SELECT
         ELSE 'En uso'
     END         AS estado_operativo
 
-FROM MESA m
-INNER JOIN SUCURSAL s ON m.sucursal_id = s.sucursal_id
+FROM MESAS m
+INNER JOIN SUCURSALES s ON m.sucursal_id = s.sucursal_id
 LEFT JOIN (
     SELECT
         p.mesa_id,
@@ -240,17 +240,17 @@ LEFT JOIN (
         p.estado_id,
         p.tomado_por_empleado_id,
         ROW_NUMBER() OVER (PARTITION BY p.mesa_id ORDER BY p.fecha_pedido DESC) AS rn
-    FROM PEDIDO p
-    INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+    FROM PEDIDOS p
+    INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
     WHERE ep.nombre NOT IN ('Cerrado', 'Cancelado')
 ) pa ON m.mesa_id = pa.mesa_id AND pa.rn = 1
-LEFT JOIN ESTADO_PEDIDO epa ON pa.estado_id              = epa.estado_id
-LEFT JOIN EMPLEADO      ea  ON pa.tomado_por_empleado_id = ea.empleado_id
+LEFT JOIN ESTADOS_PEDIDOS epa ON pa.estado_id              = epa.estado_id
+LEFT JOIN EMPLEADOS      ea  ON pa.tomado_por_empleado_id = ea.empleado_id
 GO
 
 -- =============================================
 -- SP 3: CONSULTAR PEDIDOS POR ESTADO
--- (COMBO eliminado — solo referencias a PLATO)
+-- (COMBO eliminado — solo referencias a PLATOS)
 -- =============================================
 
 PRINT 'Creando SP: sp_ConsultarPedidosPorEstado...'
@@ -275,8 +275,8 @@ BEGIN
         pc.pedido_id,
         pc.fecha_pedido,
         pc.hora_pedido,
-        pc.estado_pedido,
-        pc.canal_venta,
+        pc.estado_nombre,
+        pc.canal_nombre,
         pc.mesa_numero,
         pc.cliente_nombre,
         pc.empleado_nombre,
@@ -284,19 +284,19 @@ BEGIN
         pc.total_pedido,
         pc.minutos_transcurridos,
 
-        -- Cantidad de ítems del pedido
-        (SELECT COUNT(*) FROM DETALLE_PEDIDO dp WHERE dp.pedido_id = pc.pedido_id) AS cantidad_items,
+        -- Cantidad de ítems del PEDIDOS
+        (SELECT COUNT(*) FROM DETALLES_PEDIDOS dp WHERE dp.pedido_id = pc.pedido_id) AS cantidad_items,
 
         -- Detalle en texto (solo platos — COMBO eliminado)
         (
             SELECT STRING_AGG(pl.nombre + ' (x' + CAST(dp.cantidad AS VARCHAR) + ')', ', ')
-            FROM DETALLE_PEDIDO dp
-            INNER JOIN PLATO pl ON dp.plato_id = pl.plato_id
+            FROM DETALLES_PEDIDOS dp
+            INNER JOIN PLATOS pl ON dp.plato_id = pl.plato_id
             WHERE dp.pedido_id = pc.pedido_id
         ) AS items_pedido
 
     FROM vw_PedidosCompletos pc
-    WHERE (@estado_nombre IS NULL OR pc.estado_pedido = @estado_nombre)
+    WHERE (@estado_nombre IS NULL OR pc.estado_nombre = @estado_nombre)
       AND (@sucursal_id   IS NULL OR pc.sucursal_id   = @sucursal_id)
       AND pc.fecha_pedido_formato >= @fecha_desde
       AND pc.fecha_pedido_formato <= @fecha_hasta
@@ -326,7 +326,7 @@ BEGIN
     SELECT
         'RESUMEN DEL DIA'   AS tipo_reporte,
         @fecha              AS fecha_reporte,
-        s.nombre            AS sucursal,
+        s.nombre            AS SUCURSALES,
 
         COUNT(DISTINCT p.pedido_id)                                                           AS total_pedidos,
         COUNT(DISTINCT CASE WHEN ep.nombre = 'Cerrado'   THEN p.pedido_id END)                AS pedidos_cerrados,
@@ -338,18 +338,18 @@ BEGIN
 
         COUNT(DISTINCT p.mesa_id)                                                             AS mesas_utilizadas,
         COUNT(DISTINCT CASE WHEN cv.nombre = 'Delivery'  THEN p.pedido_id END)                AS pedidos_delivery,
-        COUNT(DISTINCT CASE WHEN cv.nombre = 'Mesa QR'   THEN p.pedido_id END)                AS pedidos_qr,
+        COUNT(DISTINCT CASE WHEN cv.nombre = 'MESAS QR'   THEN p.pedido_id END)                AS pedidos_qr,
 
         SUM(dp.cantidad)                                                                      AS total_items_vendidos,
         COUNT(DISTINCT dp.plato_id)                                                           AS platos_diferentes_vendidos
 
-    FROM SUCURSAL s
-    LEFT JOIN EMPLEADO      e  ON s.sucursal_id          = e.sucursal_id
-    LEFT JOIN PEDIDO        p  ON e.empleado_id          = p.tomado_por_empleado_id
+    FROM SUCURSALES s
+    LEFT JOIN EMPLEADOS      e  ON s.sucursal_id          = e.sucursal_id
+    LEFT JOIN PEDIDOS        p  ON e.empleado_id          = p.tomado_por_empleado_id
                                AND CAST(p.fecha_pedido AS DATE) = @fecha
-    LEFT JOIN ESTADO_PEDIDO ep ON p.estado_id            = ep.estado_id
-    LEFT JOIN CANAL_VENTA   cv ON p.canal_id             = cv.canal_id
-    LEFT JOIN DETALLE_PEDIDO dp ON p.pedido_id           = dp.pedido_id
+    LEFT JOIN ESTADOS_PEDIDOS ep ON p.estado_id            = ep.estado_id
+    LEFT JOIN CANALES_VENTAS   cv ON p.canal_id             = cv.canal_id
+    LEFT JOIN DETALLES_PEDIDOS dp ON p.pedido_id           = dp.pedido_id
     WHERE (@sucursal_id IS NULL OR s.sucursal_id = @sucursal_id)
     GROUP BY s.sucursal_id, s.nombre
     ORDER BY s.nombre

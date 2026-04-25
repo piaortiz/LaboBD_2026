@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- BUNDLE R2 - REPORTES: VISTAS Y DASHBOARD
 -- EsbirrosDB - Sistema de Gestión de Bodegón Porteño
 -- Negocio: Bodegón Los Esbirros de Claudio
@@ -8,6 +8,11 @@
 -- =============================================
 -- PREREQUISITO: Bundle_R1 debe estar ejecutado.
 -- =============================================
+
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_NULLS ON
+GO
 
 USE EsbirrosDB;
 GO
@@ -50,39 +55,39 @@ CREATE VIEW [dbo].[vw_DashboardEjecutivo] AS
 SELECT
     -- Métricas de hoy (estados Entregado + Cerrado)
     (SELECT COALESCE(SUM(total), 0)
-     FROM PEDIDO p INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+     FROM PEDIDOS p INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
      WHERE CAST(p.fecha_pedido AS DATE) = CAST(GETDATE() AS DATE)
        AND ep.nombre IN ('Entregado', 'Cerrado'))       AS ventas_hoy,
 
     (SELECT COUNT(*)
-     FROM PEDIDO p INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+     FROM PEDIDOS p INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
      WHERE CAST(p.fecha_pedido AS DATE) = CAST(GETDATE() AS DATE)
        AND ep.nombre IN ('Entregado', 'Cerrado'))       AS pedidos_hoy,
 
     (SELECT COALESCE(AVG(total), 0)
-     FROM PEDIDO p INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+     FROM PEDIDOS p INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
      WHERE CAST(p.fecha_pedido AS DATE) = CAST(GETDATE() AS DATE)
        AND ep.nombre IN ('Entregado', 'Cerrado'))       AS ticket_promedio_hoy,
 
     -- Métricas del mes
     (SELECT COALESCE(SUM(total), 0)
-     FROM PEDIDO p INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+     FROM PEDIDOS p INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
      WHERE YEAR(p.fecha_pedido)  = YEAR(GETDATE())
        AND MONTH(p.fecha_pedido) = MONTH(GETDATE())
        AND ep.nombre IN ('Entregado', 'Cerrado'))       AS ventas_mes,
 
     (SELECT COUNT(*)
-     FROM PEDIDO p INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+     FROM PEDIDOS p INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
      WHERE YEAR(p.fecha_pedido)  = YEAR(GETDATE())
        AND MONTH(p.fecha_pedido) = MONTH(GETDATE())
        AND ep.nombre IN ('Entregado', 'Cerrado'))       AS pedidos_mes,
 
-    -- Plato más vendido hoy
+    -- PLATOS más vendido hoy
     (SELECT TOP 1 pl.nombre
-     FROM DETALLE_PEDIDO dp
-     INNER JOIN PEDIDO        p  ON dp.pedido_id = p.pedido_id
-     INNER JOIN ESTADO_PEDIDO ep ON p.estado_id  = ep.estado_id
-     INNER JOIN PLATO         pl ON dp.plato_id  = pl.plato_id
+     FROM DETALLES_PEDIDOS dp
+     INNER JOIN PEDIDOS        p  ON dp.pedido_id = p.pedido_id
+     INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id  = ep.estado_id
+     INNER JOIN PLATOS         pl ON dp.plato_id  = pl.plato_id
      WHERE CAST(p.fecha_pedido AS DATE) = CAST(GETDATE() AS DATE)
        AND ep.nombre IN ('Entregado', 'Cerrado')
      GROUP BY pl.plato_id, pl.nombre
@@ -90,12 +95,12 @@ SELECT
 
     -- Estado operativo actual
     (SELECT COUNT(DISTINCT mesa_id)
-     FROM PEDIDO p INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+     FROM PEDIDOS p INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
      WHERE CAST(p.fecha_pedido AS DATE) = CAST(GETDATE() AS DATE)
        AND ep.nombre NOT IN ('Entregado', 'Cerrado', 'Cancelado')) AS mesas_ocupadas,
 
     (SELECT COUNT(*)
-     FROM PEDIDO p INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+     FROM PEDIDOS p INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
      WHERE ep.nombre IN ('Pendiente', 'Confirmado', 'En Preparación', 'Listo')) AS pedidos_pendientes,
 
     GETDATE() AS ultima_actualizacion
@@ -117,32 +122,32 @@ SELECT
     GETDATE()     AS momento,
 
     -- Pedidos por estado (cola de cocina)
-    (SELECT COUNT(*) FROM PEDIDO p INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+    (SELECT COUNT(*) FROM PEDIDOS p INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
      WHERE ep.nombre = 'Pendiente')       AS pendientes,
-    (SELECT COUNT(*) FROM PEDIDO p INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+    (SELECT COUNT(*) FROM PEDIDOS p INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
      WHERE ep.nombre = 'Confirmado')      AS confirmados,
-    (SELECT COUNT(*) FROM PEDIDO p INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+    (SELECT COUNT(*) FROM PEDIDOS p INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
      WHERE ep.nombre = 'En Preparación') AS en_preparacion,
-    (SELECT COUNT(*) FROM PEDIDO p INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+    (SELECT COUNT(*) FROM PEDIDOS p INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
      WHERE ep.nombre = 'Listo')           AS listos_entrega,
-    (SELECT COUNT(*) FROM PEDIDO p INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+    (SELECT COUNT(*) FROM PEDIDOS p INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
      WHERE ep.nombre = 'En Reparto')      AS en_reparto,
 
     -- Ocupación de mesas
     (SELECT COUNT(DISTINCT p.mesa_id)
-     FROM PEDIDO p INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+     FROM PEDIDOS p INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
      WHERE ep.nombre NOT IN ('Entregado', 'Cerrado', 'Cancelado')) AS mesas_ocupadas,
-    (SELECT COUNT(*) FROM MESA WHERE activa = 1)                    AS mesas_totales,
+    (SELECT COUNT(*) FROM MESAS WHERE activa = 1)                    AS mesas_totales,
 
     -- Facturación acumulada hoy
     (SELECT COALESCE(SUM(total), 0)
-     FROM PEDIDO p INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+     FROM PEDIDOS p INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
      WHERE CAST(p.fecha_pedido AS DATE) = CAST(GETDATE() AS DATE)
        AND ep.nombre IN ('Entregado', 'Cerrado'))                   AS ventas_acumuladas_hoy,
 
     -- Personal activo
     (SELECT COUNT(DISTINCT tomado_por_empleado_id)
-     FROM PEDIDO
+     FROM PEDIDOS
      WHERE CAST(fecha_pedido AS DATE) = CAST(GETDATE() AS DATE))    AS empleados_activos_hoy
 GO
 
@@ -191,3 +196,4 @@ PRINT '   SELECT * FROM vw_MonitoreoTiempoReal'
 PRINT '   EXEC sp_ReporteVentasDiario @guardar_reporte = 1'
 PRINT '================================================='
 GO
+

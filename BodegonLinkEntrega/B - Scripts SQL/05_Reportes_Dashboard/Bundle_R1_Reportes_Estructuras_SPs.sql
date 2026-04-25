@@ -1,11 +1,16 @@
--- =============================================
--- BUNDLE R1 - REPORTES: ESTRUCTURAS Y SPs
+﻿-- =============================================
+-- BUNDLE R1 - REPORTES Y ESTRUCTURAS
 -- EsbirrosDB - Sistema de Gestión de Bodegón Porteño
 -- Negocio: Bodegón Los Esbirros de Claudio
 -- Descripción: Tabla REPORTES_GENERADOS + SPs de reportes diarios y mensuales
 -- Proyecto Educativo ISTEA - Uso académico exclusivo
 -- PROHIBIDA LA COMERCIALIZACIÓN
 -- =============================================
+
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_NULLS ON
+GO
 
 USE EsbirrosDB;
 GO
@@ -19,14 +24,14 @@ PRINT ''
 -- VERIFICACIÓN DE PREREQUISITOS
 -- =============================================
 
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'PEDIDO')
-BEGIN PRINT 'ERROR: Tabla PEDIDO no encontrada. Ejecutar Bundle_A1 primero.'; RETURN END
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'PEDIDOS')
+BEGIN PRINT 'ERROR: Tabla PEDIDOS no encontrada. Ejecutar Bundle_A1 primero.'; RETURN END
 
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'DETALLE_PEDIDO')
-BEGIN PRINT 'ERROR: Tabla DETALLE_PEDIDO no encontrada. Ejecutar Bundle_A1 primero.'; RETURN END
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'DETALLES_PEDIDOS')
+BEGIN PRINT 'ERROR: Tabla DETALLES_PEDIDOS no encontrada. Ejecutar Bundle_A1 primero.'; RETURN END
 
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'ESTADO_PEDIDO')
-BEGIN PRINT 'ERROR: Tabla ESTADO_PEDIDO no encontrada. Ejecutar Bundle_A1 primero.'; RETURN END
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'ESTADOS_PEDIDOS')
+BEGIN PRINT 'ERROR: Tabla ESTADOS_PEDIDOS no encontrada. Ejecutar Bundle_A1 primero.'; RETURN END
 
 PRINT 'Prerequisitos verificados OK'
 PRINT ''
@@ -49,7 +54,7 @@ BEGIN
         ejecutado_por    NVARCHAR(100) DEFAULT SYSTEM_USER,
         estado           NVARCHAR(20)  DEFAULT 'COMPLETADO',
         observaciones    NVARCHAR(500) NULL,
-        CONSTRAINT FK_REPORTES_sucursal FOREIGN KEY (sucursal_id) REFERENCES SUCURSAL(sucursal_id)
+        CONSTRAINT FK_REPORTES_sucursal FOREIGN KEY (sucursal_id) REFERENCES SUCURSALES(sucursal_id)
     );
 
     -- Índices para consultas frecuentes (mejorespracticas.md §4)
@@ -86,10 +91,10 @@ BEGIN
 
     DECLARE @facturacion_actual DECIMAL(18,2) = (
         SELECT SUM(p.total)
-        FROM PEDIDO p
-        INNER JOIN ESTADO_PEDIDO ep  ON p.estado_id = ep.estado_id
-        LEFT JOIN  MESA           m   ON p.mesa_id   = m.mesa_id
-        LEFT JOIN  EMPLEADO       emp ON p.tomado_por_empleado_id = emp.empleado_id
+        FROM PEDIDOS p
+        INNER JOIN ESTADOS_PEDIDOS ep  ON p.estado_id = ep.estado_id
+        LEFT JOIN  MESAS           m   ON p.mesa_id   = m.mesa_id
+        LEFT JOIN  EMPLEADOS       emp ON p.tomado_por_empleado_id = emp.empleado_id
         WHERE CAST(p.fecha_pedido AS DATE) = @fecha
           AND ep.nombre IN ('Entregado', 'Cerrado')
           AND (@sucursal_id IS NULL OR m.sucursal_id = @sucursal_id OR (p.mesa_id IS NULL AND emp.sucursal_id = @sucursal_id))
@@ -97,10 +102,10 @@ BEGIN
 
     DECLARE @facturacion_ayer DECIMAL(18,2) = (
         SELECT SUM(p.total)
-        FROM PEDIDO p
-        INNER JOIN ESTADO_PEDIDO ep  ON p.estado_id = ep.estado_id
-        LEFT JOIN  MESA           m   ON p.mesa_id   = m.mesa_id
-        LEFT JOIN  EMPLEADO       emp ON p.tomado_por_empleado_id = emp.empleado_id
+        FROM PEDIDOS p
+        INNER JOIN ESTADOS_PEDIDOS ep  ON p.estado_id = ep.estado_id
+        LEFT JOIN  MESAS           m   ON p.mesa_id   = m.mesa_id
+        LEFT JOIN  EMPLEADOS       emp ON p.tomado_por_empleado_id = emp.empleado_id
         WHERE CAST(p.fecha_pedido AS DATE) = @fecha_anterior
           AND ep.nombre IN ('Entregado', 'Cerrado')
           AND (@sucursal_id IS NULL OR m.sucursal_id = @sucursal_id OR (p.mesa_id IS NULL AND emp.sucursal_id = @sucursal_id))
@@ -109,7 +114,7 @@ BEGIN
     CREATE TABLE #ResultadoVentas (
         tipo_reporte            NVARCHAR(50),
         fecha_reporte           DATE,
-        sucursal                NVARCHAR(100),
+        sucursal_nombre         NVARCHAR(100),
         facturacion_total       DECIMAL(18,2),
         pedidos_completados     INT,
         ticket_promedio         DECIMAL(18,2),
@@ -127,10 +132,10 @@ BEGIN
         ISNULL(@facturacion_actual, 0),
         (
             SELECT COUNT(DISTINCT p.pedido_id)
-            FROM PEDIDO p
-            INNER JOIN ESTADO_PEDIDO ep  ON p.estado_id = ep.estado_id
-            LEFT JOIN  MESA           m  ON p.mesa_id   = m.mesa_id
-            LEFT JOIN  EMPLEADO     emp  ON p.tomado_por_empleado_id = emp.empleado_id
+            FROM PEDIDOS p
+            INNER JOIN ESTADOS_PEDIDOS ep  ON p.estado_id = ep.estado_id
+            LEFT JOIN  MESAS           m  ON p.mesa_id   = m.mesa_id
+            LEFT JOIN  EMPLEADOS     emp  ON p.tomado_por_empleado_id = emp.empleado_id
             WHERE CAST(p.fecha_pedido AS DATE) = @fecha
               AND ep.nombre IN ('Entregado', 'Cerrado')
               AND (@sucursal_id IS NULL OR m.sucursal_id = @sucursal_id OR (p.mesa_id IS NULL AND emp.sucursal_id = @sucursal_id))
@@ -139,10 +144,10 @@ BEGIN
             SELECT AVG(sub.total)
             FROM (
                 SELECT DISTINCT p.pedido_id, p.total
-                FROM PEDIDO p
-                INNER JOIN ESTADO_PEDIDO ep  ON p.estado_id = ep.estado_id
-                LEFT JOIN  MESA           m  ON p.mesa_id   = m.mesa_id
-                LEFT JOIN  EMPLEADO     emp  ON p.tomado_por_empleado_id = emp.empleado_id
+                FROM PEDIDOS p
+                INNER JOIN ESTADOS_PEDIDOS ep  ON p.estado_id = ep.estado_id
+                LEFT JOIN  MESAS           m  ON p.mesa_id   = m.mesa_id
+                LEFT JOIN  EMPLEADOS     emp  ON p.tomado_por_empleado_id = emp.empleado_id
                 WHERE CAST(p.fecha_pedido AS DATE) = @fecha
                   AND ep.nombre IN ('Entregado', 'Cerrado')
                   AND (@sucursal_id IS NULL OR m.sucursal_id = @sucursal_id OR (p.mesa_id IS NULL AND emp.sucursal_id = @sucursal_id))
@@ -156,27 +161,27 @@ BEGIN
         END,
         (
             SELECT SUM(dp.cantidad)
-            FROM DETALLE_PEDIDO dp
-            INNER JOIN PEDIDO        p3   ON dp.pedido_id = p3.pedido_id
-            INNER JOIN ESTADO_PEDIDO ep3  ON p3.estado_id = ep3.estado_id
-            LEFT JOIN  MESA          m3   ON p3.mesa_id   = m3.mesa_id
-            LEFT JOIN  EMPLEADO      emp3 ON p3.tomado_por_empleado_id = emp3.empleado_id
+            FROM DETALLES_PEDIDOS dp
+            INNER JOIN PEDIDOS        p3   ON dp.pedido_id = p3.pedido_id
+            INNER JOIN ESTADOS_PEDIDOS ep3  ON p3.estado_id = ep3.estado_id
+            LEFT JOIN  MESAS          m3   ON p3.mesa_id   = m3.mesa_id
+            LEFT JOIN  EMPLEADOS      emp3 ON p3.tomado_por_empleado_id = emp3.empleado_id
             WHERE CAST(p3.fecha_pedido AS DATE) = @fecha
               AND ep3.nombre IN ('Entregado', 'Cerrado')
               AND (@sucursal_id IS NULL OR m3.sucursal_id = @sucursal_id OR (p3.mesa_id IS NULL AND emp3.sucursal_id = @sucursal_id))
         ),
         (
             SELECT COUNT(DISTINCT p.mesa_id)
-            FROM PEDIDO p
-            LEFT JOIN MESA     m   ON p.mesa_id = m.mesa_id
-            LEFT JOIN EMPLEADO emp ON p.tomado_por_empleado_id = emp.empleado_id
+            FROM PEDIDOS p
+            LEFT JOIN MESAS     m   ON p.mesa_id = m.mesa_id
+            LEFT JOIN EMPLEADOS emp ON p.tomado_por_empleado_id = emp.empleado_id
             WHERE CAST(p.fecha_pedido AS DATE) = @fecha
               AND (@sucursal_id IS NULL OR m.sucursal_id = @sucursal_id OR (p.mesa_id IS NULL AND emp.sucursal_id = @sucursal_id))
         )
-    FROM SUCURSAL s
+    FROM SUCURSALES s
     WHERE (@sucursal_id IS NULL OR s.sucursal_id = @sucursal_id);
 
-    SELECT * FROM #ResultadoVentas ORDER BY sucursal;
+    SELECT * FROM #ResultadoVentas ORDER BY sucursal_nombre;
 
     IF @guardar_reporte = 1
     BEGIN
@@ -234,12 +239,12 @@ BEGIN
         SUM(dp.subtotal),
         COUNT(DISTINCT p.pedido_id),
         ROUND(SUM(dp.cantidad) * 1.0 / COUNT(DISTINCT p.pedido_id), 2)
-    FROM DETALLE_PEDIDO dp
-    INNER JOIN PEDIDO        p  ON dp.pedido_id = p.pedido_id
-    INNER JOIN ESTADO_PEDIDO ep ON p.estado_id  = ep.estado_id
-    INNER JOIN PLATO         pl  ON dp.plato_id  = pl.plato_id
-    LEFT JOIN  MESA          m   ON p.mesa_id    = m.mesa_id
-    LEFT JOIN  EMPLEADO      emp ON p.tomado_por_empleado_id = emp.empleado_id
+    FROM DETALLES_PEDIDOS dp
+    INNER JOIN PEDIDOS        p  ON dp.pedido_id = p.pedido_id
+    INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id  = ep.estado_id
+    INNER JOIN PLATOS         pl  ON dp.plato_id  = pl.plato_id
+    LEFT JOIN  MESAS          m   ON p.mesa_id    = m.mesa_id
+    LEFT JOIN  EMPLEADOS      emp ON p.tomado_por_empleado_id = emp.empleado_id
     WHERE CAST(p.fecha_pedido AS DATE) = @fecha
       AND ep.nombre IN ('Entregado', 'Cerrado')
       AND (@sucursal_id IS NULL OR m.sucursal_id = @sucursal_id OR (p.mesa_id IS NULL AND emp.sucursal_id = @sucursal_id))
@@ -284,8 +289,8 @@ BEGIN
 
     DECLARE @total_facturacion DECIMAL(18,2) = (
         SELECT COALESCE(SUM(p.total), 0)
-        FROM PEDIDO p
-        INNER JOIN ESTADO_PEDIDO ep ON p.estado_id = ep.estado_id
+        FROM PEDIDOS p
+        INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
         WHERE CAST(p.fecha_pedido AS DATE) = @fecha
           AND ep.nombre IN ('Entregado', 'Cerrado')
     );
@@ -293,7 +298,7 @@ BEGIN
     CREATE TABLE #ResultadoCanal (
         tipo_reporte            NVARCHAR(50),
         fecha_reporte           DATE,
-        canal_venta             NVARCHAR(50),
+        canal_nombre            NVARCHAR(50),
         total_pedidos           INT,
         pedidos_completados     INT,
         pedidos_pendientes      INT,
@@ -325,10 +330,10 @@ BEGIN
                 * 100.0 / @total_facturacion, 2)
             ELSE 0
         END
-    FROM CANAL_VENTA cv
-    LEFT JOIN PEDIDO        p  ON cv.canal_id  = p.canal_id
+    FROM CANALES_VENTAS cv
+    LEFT JOIN PEDIDOS        p  ON cv.canal_id  = p.canal_id
                                AND CAST(p.fecha_pedido AS DATE) = @fecha
-    LEFT JOIN ESTADO_PEDIDO ep ON p.estado_id  = ep.estado_id
+    LEFT JOIN ESTADOS_PEDIDOS ep ON p.estado_id  = ep.estado_id
     GROUP BY cv.canal_id, cv.nombre
 
     SELECT * FROM #ResultadoCanal ORDER BY facturacion_canal DESC
@@ -378,7 +383,7 @@ BEGIN
         anio                    INT,
         mes                     INT,
         nombre_mes              NVARCHAR(20),
-        sucursal                NVARCHAR(100),
+        sucursal_nombre         NVARCHAR(100),
         facturacion_total       DECIMAL(18,2),
         pedidos_completados     INT,
         pedidos_cancelados      INT,
@@ -400,21 +405,21 @@ BEGIN
         COALESCE(AVG(CASE WHEN ep.nombre IN ('Entregado','Cerrado') THEN p.total END), 0),
         (
             SELECT COALESCE(SUM(dp.cantidad), 0)
-            FROM DETALLE_PEDIDO dp
-            INNER JOIN PEDIDO        p2  ON dp.pedido_id = p2.pedido_id
-            INNER JOIN ESTADO_PEDIDO ep2  ON p2.estado_id = ep2.estado_id
-            LEFT JOIN  MESA          m2   ON p2.mesa_id   = m2.mesa_id
-            LEFT JOIN  EMPLEADO      emp2 ON p2.tomado_por_empleado_id = emp2.empleado_id
+            FROM DETALLES_PEDIDOS dp
+            INNER JOIN PEDIDOS        p2  ON dp.pedido_id = p2.pedido_id
+            INNER JOIN ESTADOS_PEDIDOS ep2  ON p2.estado_id = ep2.estado_id
+            LEFT JOIN  MESAS          m2   ON p2.mesa_id   = m2.mesa_id
+            LEFT JOIN  EMPLEADOS      emp2 ON p2.tomado_por_empleado_id = emp2.empleado_id
             WHERE p2.fecha_pedido BETWEEN @fecha_inicio AND DATEADD(DAY,1,@fecha_fin)
               AND ep2.nombre IN ('Entregado', 'Cerrado')
               AND (@sucursal_id IS NULL OR m2.sucursal_id = @sucursal_id OR (p2.mesa_id IS NULL AND emp2.sucursal_id = @sucursal_id))
         ),
         COUNT(DISTINCT CAST(p.fecha_pedido AS DATE))
-    FROM SUCURSAL s
-    LEFT JOIN EMPLEADO      e  ON s.sucursal_id = e.sucursal_id
-    LEFT JOIN PEDIDO        p  ON e.empleado_id = p.tomado_por_empleado_id
+    FROM SUCURSALES s
+    LEFT JOIN EMPLEADOS      e  ON s.sucursal_id = e.sucursal_id
+    LEFT JOIN PEDIDOS        p  ON e.empleado_id = p.tomado_por_empleado_id
                                AND p.fecha_pedido BETWEEN @fecha_inicio AND DATEADD(DAY,1,@fecha_fin)
-    LEFT JOIN ESTADO_PEDIDO ep ON p.estado_id   = ep.estado_id
+    LEFT JOIN ESTADOS_PEDIDOS ep ON p.estado_id   = ep.estado_id
     WHERE (@sucursal_id IS NULL OR s.sucursal_id = @sucursal_id)
     GROUP BY s.sucursal_id, s.nombre
     ORDER BY s.nombre
@@ -471,12 +476,12 @@ BEGIN
         ROUND(SUM(dp.cantidad) * 1.0 / COUNT(DISTINCT p.pedido_id), 2) AS promedio_por_pedido,
         MAX(dp.precio_unitario)                            AS precio_maximo,
         MIN(dp.precio_unitario)                            AS precio_minimo
-    FROM DETALLE_PEDIDO dp
-    INNER JOIN PEDIDO        p  ON dp.pedido_id = p.pedido_id
-    INNER JOIN ESTADO_PEDIDO ep ON p.estado_id  = ep.estado_id
-    INNER JOIN PLATO         pl  ON dp.plato_id  = pl.plato_id
-    LEFT JOIN  MESA          m   ON p.mesa_id    = m.mesa_id
-    LEFT JOIN  EMPLEADO      emp ON p.tomado_por_empleado_id = emp.empleado_id
+    FROM DETALLES_PEDIDOS dp
+    INNER JOIN PEDIDOS        p  ON dp.pedido_id = p.pedido_id
+    INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id  = ep.estado_id
+    INNER JOIN PLATOS         pl  ON dp.plato_id  = pl.plato_id
+    LEFT JOIN  MESAS          m   ON p.mesa_id    = m.mesa_id
+    LEFT JOIN  EMPLEADOS      emp ON p.tomado_por_empleado_id = emp.empleado_id
     WHERE p.fecha_pedido BETWEEN @fecha_inicio AND DATEADD(DAY,1,@fecha_fin)
       AND ep.nombre IN ('Entregado', 'Cerrado')
       AND (@sucursal_id IS NULL OR m.sucursal_id = @sucursal_id OR (p.mesa_id IS NULL AND emp.sucursal_id = @sucursal_id))
@@ -511,3 +516,15 @@ PRINT ''
 PRINT 'SIGUIENTE PASO: Ejecutar Bundle_R2_Reportes_Vistas_Dashboard.sql'
 PRINT '============================================='
 GO
+
+-- =============================================
+-- PERMISOS DIFERIDOS: REPORTES_GENERADOS
+-- (requiere que Bundle_C_Seguridad se haya ejecutado antes)
+-- =============================================
+IF EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_aplicacion_web')
+BEGIN
+    GRANT SELECT ON dbo.REPORTES_GENERADOS TO [rol_aplicacion_web];
+    PRINT 'Permiso SELECT sobre REPORTES_GENERADOS aplicado a rol_aplicacion_web'
+END
+GO
+
