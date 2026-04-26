@@ -201,7 +201,7 @@ SELECT
             SELECT 1 FROM PEDIDOS p
             INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
             WHERE p.mesa_id = m.mesa_id
-              AND ep.nombre NOT IN ('Cerrado', 'Cancelado')
+              AND ep.nombre NOT IN ('Cerrado', 'Cancelado', 'Entregado')
         ) THEN 'Ocupada'
         ELSE 'Disponible'
     END         AS estado_actual,
@@ -242,7 +242,7 @@ LEFT JOIN (
         ROW_NUMBER() OVER (PARTITION BY p.mesa_id ORDER BY p.fecha_pedido DESC) AS rn
     FROM PEDIDOS p
     INNER JOIN ESTADOS_PEDIDOS ep ON p.estado_id = ep.estado_id
-    WHERE ep.nombre NOT IN ('Cerrado', 'Cancelado')
+    WHERE ep.nombre NOT IN ('Cerrado', 'Cancelado', 'Entregado')
 ) pa ON m.mesa_id = pa.mesa_id AND pa.rn = 1
 LEFT JOIN ESTADOS_PEDIDOS epa ON pa.estado_id              = epa.estado_id
 LEFT JOIN EMPLEADOS      ea  ON pa.tomado_por_empleado_id = ea.empleado_id
