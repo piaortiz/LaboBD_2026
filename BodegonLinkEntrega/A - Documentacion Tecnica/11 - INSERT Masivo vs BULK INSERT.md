@@ -8,6 +8,8 @@
 | **Proyecto**  | Sistema de Gestión de Pedidos EsbirrosDB             |
 | **Cliente**   | Bodegón Los Esbirros de Claudio                      |
 | **Instituto** | ISTEA                                                |
+| **Materia**   | Laboratorio de Administración de Bases de Datos      |
+| **Profesor**  | Carlos Alejandro Caraccio                            |
 | **Versión**   | 1.0                                                  |
 | **Fecha**     | Abril 2026                                           |
 | **Estado**    | Documentación Técnica de Referencia                  |

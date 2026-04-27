@@ -294,7 +294,7 @@ sqlcmd -S [SERVIDOR] -E -i "07_Carga_Masiva_Datos/Bundle_F_Carga_Masiva.sql"
 ```powershell
 # Variables de configuración
 $Server     = "localhost"
-$BundlesPath = "C:\BodegaLinkEntrega\B - Scripts SQL"
+$BundlesPath = "C:\Entrega_Parcial\B - Scripts SQL"
 
 # Función de ejecución
 function Execute-Bundle($BundlePath, $Database = "EsbirrosDB") {

@@ -8,8 +8,11 @@
 | **Proyecto** | Sistema de Gestión de Pedidos EsbirrosDB |
 | **Cliente** | Bodegón Los Esbirros de Claudio |
 | **Desarrollado por** | SQLeaders S.A. |
-| **Versión** | 2.0 |
+| **Versión** | 1.0 |
 | **Estado** | Implementado y Funcional |
+| **Instituto** | ISTEA |
+| **Materia** | Laboratorio de Administración de Bases de Datos |
+| **Profesor** | Carlos Alejandro Caraccio |
 
 ## **RESUMEN EJECUTIVO**
 

@@ -8,7 +8,9 @@
 | **Proyecto**    | Sistema de Gestión de Bodegón Porteño          |
 | **CLIENTES**     | Bodegón Los Esbirros de Claudio                |
 | **Instituto**   | ISTEA                                          |
-| **Versión**     | 2.0                                            |
+| **Materia**     | Laboratorio de Administración de Bases de Datos |
+| **Profesor**    | Carlos Alejandro Caraccio                      |
+| **Versión**     | 1.0                                            |
 | **Fecha**       | Abril 2026                                     |
 | **Estado**      | Documentación Post-Presentación                |
 

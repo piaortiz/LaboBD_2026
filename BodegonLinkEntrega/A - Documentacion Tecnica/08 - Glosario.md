@@ -8,8 +8,11 @@
 | **Proyecto** | Sistema de Gestión de Pedidos — Bodegón Porteño |
 | **CLIENTES** | Bodegón Los Esbirros de Claudio |
 | **Desarrollado por** | SQLeaders S.A. |
-| **Versión** | 2.0 |
+| **Versión** | 1.0 |
 | **Estado** | Implementado y Funcional |
+| **Instituto** | ISTEA |
+| **Materia** | Laboratorio de Administración de Bases de Datos |
+| **Profesor** | Carlos Alejandro Caraccio |
 
 ## **RESUMEN EJECUTIVO**
 
@@ -215,5 +218,5 @@ Este glosario define todos los términos técnicos, conceptos de negocio y abrev
 ---
 
 **Documento generado por SQLeaders S.A.**  
-**Versión: 2.0 — 2026**  
+**Versión: 1.0 — 2026**  
 **EsbirrosDB v2.0 — Proyecto Educativo ISTEA**

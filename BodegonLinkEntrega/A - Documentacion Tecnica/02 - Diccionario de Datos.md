@@ -8,7 +8,9 @@
 | **Proyecto**    | Sistema de Gestión de Bodegón Porteño          |
 | **CLIENTES**     | Bodegón Los Esbirros de Claudio                |
 | **Instituto**   | ISTEA                                          |
-| **Versión**     | 2.0                                            |
+| **Materia**     | Laboratorio de Administración de Bases de Datos |
+| **Profesor**    | Carlos Alejandro Caraccio                      |
+| **Versión**     | 1.0                                            |
 | **Estado**      | Implementado y Funcional                       |
 
 ---
@@ -449,4 +451,4 @@ Registro de reportes generados por los Stored Procedures de reporting.
 ---
 
 **Documento generado por SQLeaders S.A.**  
-**Versión: 2.0 — Adaptación EsbirrosDB — 2026**
+**Versión: 1.0 — Adaptación EsbirrosDB — 2026**

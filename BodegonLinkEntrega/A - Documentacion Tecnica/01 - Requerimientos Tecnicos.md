@@ -8,9 +8,11 @@
 | **Proyecto** | Sistema de Gestión de Pedidos — Bodegón Porteño |
 | **CLIENTES** | Bodegón Los Esbirros de Claudio |
 | **Desarrollado por** | SQLeaders S.A. |
-| **Versión** | 2.0 |
+| **Versión** | 1.0 |
 | **Tipo** | Especificación Técnica Completa |
 | **Instituto** | ISTEA |
+| **Materia** | Laboratorio de Administración de Bases de Datos |
+| **Profesor** | Carlos Alejandro Caraccio |
 
 ---
 
@@ -192,5 +194,5 @@ Para la estrategia completa: ver **07 - Plan de Backup y Recuperacion.md**
 ---
 
 **Documento generado por SQLeaders S.A.**  
-**Versión: 2.0 - 2026**  
+**Versión: 1.0 - 2026**  
 **Proyecto Educativo ISTEA — Prohibida la comercialización**
